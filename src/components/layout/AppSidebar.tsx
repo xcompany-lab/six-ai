@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, User, CreditCard, Bot, CalendarCheck, RotateCcw,
   Zap, Bell, Calendar, MessageSquare, Columns3, Brain, Settings, HelpCircle,
-  ChevronLeft, ChevronRight, LogOut,
+  ChevronLeft, ChevronRight, LogOut, X,
 } from 'lucide-react';
 import sixLogo from '@/assets/six-logo-dark.png';
 
@@ -14,6 +14,11 @@ interface MenuItem {
   icon: React.ElementType;
   path: string;
   requiredPlan?: 'start' | 'plus' | 'pro';
+}
+
+interface AppSidebarProps {
+  onClose?: () => void;
+  isMobile?: boolean;
 }
 
 const menuItems: MenuItem[] = [
@@ -33,7 +38,7 @@ const menuItems: MenuItem[] = [
   { label: 'Suporte', icon: HelpCircle, path: '/app/suporte' },
 ];
 
-export default function AppSidebar() {
+export default function AppSidebar({ onClose, isMobile }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,26 +49,41 @@ export default function AppSidebar() {
     navigate('/');
   };
 
+  const handleNavigate = (path: string, locked: boolean) => {
+    if (locked) return;
+    navigate(path);
+    if (isMobile) onClose?.();
+  };
+
+  const showLabels = isMobile || !collapsed;
+  const sidebarWidth = isMobile ? 280 : collapsed ? 72 : 260;
+
   return (
     <motion.aside
-      animate={{ width: collapsed ? 72 : 260 }}
+      animate={{ width: sidebarWidth }}
       transition={{ duration: 0.2 }}
       className="h-screen flex flex-col bg-sidebar border-r border-sidebar-border sticky top-0 z-40 overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 h-16 border-b border-sidebar-border">
         <AnimatePresence>
-          {!collapsed && (
+          {showLabels && (
             <motion.img src={sixLogo} alt="SIX AI" className="h-8 object-contain"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
           )}
         </AnimatePresence>
-        <button onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        {isMobile ? (
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
+            <X size={18} />
+          </button>
+        ) : (
+          <button onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        )}
       </div>
 
-      {profile?.plan === 'trial' && !collapsed && (
+      {profile?.plan === 'trial' && showLabels && (
         <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-gradient-brand text-xs font-semibold text-primary-foreground text-center">
           Trial · {Math.max(0, Math.ceil((new Date(profile.trial_ends_at!).getTime() - Date.now()) / 86400000))} dias restantes
         </div>
@@ -76,7 +96,7 @@ export default function AppSidebar() {
           const Icon = item.icon;
 
           return (
-            <button key={item.path} onClick={() => !locked && navigate(item.path)}
+            <button key={item.path} onClick={() => handleNavigate(item.path, !!locked)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
                 ${isActive ? 'bg-primary/10 text-primary glow-blue'
                   : locked ? 'text-muted-foreground/40 cursor-not-allowed'
@@ -84,7 +104,7 @@ export default function AppSidebar() {
               title={locked ? `Disponível no plano ${item.requiredPlan}` : item.label}>
               <Icon size={20} className={isActive ? 'text-primary' : ''} />
               <AnimatePresence>
-                {!collapsed && (
+                {showLabels && (
                   <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }}
                     className="whitespace-nowrap overflow-hidden">
                     {item.label}{locked && ' 🔒'}
@@ -96,7 +116,7 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      {profile && !collapsed && (
+      {profile && showLabels && (
         <div className="mx-3 mb-2 p-3 rounded-lg bg-secondary">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Uso de IA</span>
@@ -113,7 +133,7 @@ export default function AppSidebar() {
         <button onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors">
           <LogOut size={18} />
-          {!collapsed && <span>Sair</span>}
+          {showLabels && <span>Sair</span>}
         </button>
       </div>
     </motion.aside>
