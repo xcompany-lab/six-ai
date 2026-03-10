@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -21,23 +22,42 @@ import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isOnboarded } = useAuth();
+  const { isAuthenticated, isOnboarded, isLoading } = useAuth();
+  if (isLoading) return <LoadingScreen />;
   if (!isAuthenticated) return <Navigate to="/" replace />;
   if (!isOnboarded) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isOnboarded, isLoading } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
 
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/app" replace /> : <LoginPage />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/" element={
+        isAuthenticated
+          ? (isOnboarded ? <Navigate to="/app" replace /> : <Navigate to="/onboarding" replace />)
+          : <LoginPage />
+      } />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/onboarding" element={
+        isAuthenticated ? <OnboardingPage /> : <Navigate to="/" replace />
+      } />
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />
         <Route path="perfil" element={<ProfilePage />} />
