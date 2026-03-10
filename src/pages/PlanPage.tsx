@@ -17,9 +17,9 @@ export default function PlanPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Plano atual</p>
-            <p className="text-2xl font-bold text-gradient-brand capitalize">{PLAN_FEATURES[user?.plan || 'trial'].name}</p>
-            {user?.plan === 'trial' && (
-              <p className="text-sm text-warning mt-1">Trial expira em {Math.max(0, Math.ceil((new Date(user.trialEndsAt!).getTime() - Date.now()) / 86400000))} dias</p>
+            <p className="text-2xl font-bold text-gradient-brand capitalize">{PLAN_FEATURES[(profile?.plan as PlanType) || 'trial'].name}</p>
+            {profile?.plan === 'trial' && profile.trial_ends_at && (
+              <p className="text-sm text-warning mt-1">Trial expira em {Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000))} dias</p>
             )}
           </div>
           <div className="flex gap-6">
