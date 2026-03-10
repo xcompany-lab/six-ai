@@ -45,7 +45,7 @@ export default function PlanPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {plans.map((planKey, i) => {
           const plan = PLAN_FEATURES[planKey];
-          const isCurrent = user?.plan === planKey;
+          const isCurrent = profile?.plan === planKey;
           const isPopular = planKey === 'pro';
 
           return (
