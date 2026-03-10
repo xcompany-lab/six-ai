@@ -59,6 +59,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_config: {
+        Row: {
+          active: boolean
+          created_at: string
+          energy: string
+          fallback_message: string
+          faq: string
+          id: string
+          knowledge_base: string
+          objections: string
+          opening_message: string
+          out_of_scope: string
+          pitch: string
+          prohibited_words: string
+          prompt: string
+          updated_at: string
+          user_id: string
+          voice_tone: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          energy?: string
+          fallback_message?: string
+          faq?: string
+          id?: string
+          knowledge_base?: string
+          objections?: string
+          opening_message?: string
+          out_of_scope?: string
+          pitch?: string
+          prohibited_words?: string
+          prompt?: string
+          updated_at?: string
+          user_id: string
+          voice_tone?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          energy?: string
+          fallback_message?: string
+          faq?: string
+          id?: string
+          knowledge_base?: string
+          objections?: string
+          opening_message?: string
+          out_of_scope?: string
+          pitch?: string
+          prohibited_words?: string
+          prompt?: string
+          updated_at?: string
+          user_id?: string
+          voice_tone?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -111,6 +168,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_memory: {
+        Row: {
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          id: string
+          interaction_count: number
+          last_interaction_at: string
+          last_topics: string
+          preferences: string
+          sentiment: string
+          summary: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          interaction_count?: number
+          last_interaction_at?: string
+          last_topics?: string
+          preferences?: string
+          sentiment?: string
+          summary?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          interaction_count?: number
+          last_interaction_at?: string
+          last_topics?: string
+          preferences?: string
+          sentiment?: string
+          summary?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       follow_up_flows: {
         Row: {
