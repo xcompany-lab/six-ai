@@ -25,7 +25,7 @@ export default function PlanPage() {
           <div className="flex gap-6">
             <div>
               <p className="text-sm text-muted-foreground">Contatos</p>
-              <p className="text-lg font-semibold text-foreground">{user?.contactsUsed?.toLocaleString()} / {user?.contactsLimit?.toLocaleString()}</p>
+              <p className="text-lg font-semibold text-foreground">{profile?.contacts_used?.toLocaleString()} / {profile?.contacts_limit?.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Uso IA</p>
