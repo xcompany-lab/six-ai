@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${user?.name?.split(' ')[0]}. Aqui está sua visão geral.`} />
+      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${profile?.name?.split(' ')[0] || 'usuário'}. Aqui está sua visão geral.`} />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
