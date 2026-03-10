@@ -29,7 +29,7 @@ export default function PlanPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Uso IA</p>
-              <p className="text-lg font-semibold text-foreground">{user?.aiUsagePercent}%</p>
+              <p className="text-lg font-semibold text-foreground">{profile?.ai_usage_percent}%</p>
             </div>
           </div>
         </div>
