@@ -23,7 +23,7 @@ const alerts = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
   return (
     <div>
