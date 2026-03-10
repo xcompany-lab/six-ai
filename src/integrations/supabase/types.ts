@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          date: string
+          duration_minutes: number
+          id: string
+          lead_id: string | null
+          lead_name: string
+          notes: string
+          service: string
+          status: string
+          time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          duration_minutes?: number
+          id?: string
+          lead_id?: string | null
+          lead_name?: string
+          notes?: string
+          service?: string
+          status?: string
+          time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          duration_minutes?: number
+          id?: string
+          lead_id?: string | null
+          lead_name?: string
+          notes?: string
+          service?: string
+          status?: string
+          time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           ai_status: string
@@ -134,6 +187,51 @@ export type Database = {
           updated_at?: string
           voice_tone?: string | null
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      scheduling_config: {
+        Row: {
+          blocked_dates: string[]
+          buffer_minutes: number
+          created_at: string
+          default_duration: number
+          id: string
+          lunch_end: string | null
+          lunch_start: string | null
+          updated_at: string
+          user_id: string
+          work_days: number[]
+          work_end: string
+          work_start: string
+        }
+        Insert: {
+          blocked_dates?: string[]
+          buffer_minutes?: number
+          created_at?: string
+          default_duration?: number
+          id?: string
+          lunch_end?: string | null
+          lunch_start?: string | null
+          updated_at?: string
+          user_id: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Update: {
+          blocked_dates?: string[]
+          buffer_minutes?: number
+          created_at?: string
+          default_duration?: number
+          id?: string
+          lunch_end?: string | null
+          lunch_start?: string | null
+          updated_at?: string
+          user_id?: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
         }
         Relationships: []
       }
