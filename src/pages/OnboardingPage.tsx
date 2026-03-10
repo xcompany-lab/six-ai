@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import sixLogo from '@/assets/six-logo-dark.png';
 
 const steps = ['Sobre Você', 'Sua Empresa', 'Objetivos'];
@@ -19,8 +20,9 @@ const niches = [
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
-    name: '', brandName: '', whatsapp: '', niche: '', services: '',
+    name: '', brand_name: '', whatsapp: '', niche: '', services: '',
     objective: [] as string[],
   });
   const navigate = useNavigate();
@@ -33,16 +35,22 @@ export default function OnboardingPage() {
     }));
   };
 
-  const finish = () => {
-    completeOnboarding({
-      name: data.name,
-      brandName: data.brandName,
-      whatsapp: data.whatsapp,
-      niche: data.niche,
-      services: data.services.split(',').map(s => s.trim()).filter(Boolean),
-      objective: data.objective[0] || '',
-    });
-    navigate('/app');
+  const finish = async () => {
+    setLoading(true);
+    try {
+      await completeOnboarding({
+        name: data.name,
+        brand_name: data.brand_name,
+        whatsapp: data.whatsapp,
+        niche: data.niche,
+        services: data.services.split(',').map(s => s.trim()).filter(Boolean),
+        objective: data.objective[0] || '',
+      });
+      navigate('/app');
+    } catch {
+      toast.error('Erro ao salvar dados. Tente novamente.');
+    }
+    setLoading(false);
   };
 
   return (
@@ -54,7 +62,6 @@ export default function OnboardingPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-lg relative z-10">
         <img src={sixLogo} alt="SIX AI" className="h-12 mx-auto mb-8" />
 
-        {/* Steps indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
@@ -92,7 +99,7 @@ export default function OnboardingPage() {
                   <h2 className="text-xl font-bold text-foreground">Sua empresa</h2>
                   <div>
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Nome da marca/empresa</label>
-                    <input value={data.brandName} onChange={e => setData(d => ({ ...d, brandName: e.target.value }))}
+                    <input value={data.brand_name} onChange={e => setData(d => ({ ...d, brand_name: e.target.value }))}
                       className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nome da sua marca" />
                   </div>
                   <div>
@@ -143,9 +150,10 @@ export default function OnboardingPage() {
                 Próximo <ArrowRight size={16} />
               </button>
             ) : (
-              <button onClick={finish}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-                Começar <Check size={16} />
+              <button onClick={finish} disabled={loading}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                Começar
               </button>
             )}
           </div>

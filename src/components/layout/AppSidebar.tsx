@@ -37,7 +37,12 @@ export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasPlanAccess } = useAuth();
+  const { profile, signOut, hasPlanAccess } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <motion.aside
@@ -45,36 +50,25 @@ export default function AppSidebar() {
       transition={{ duration: 0.2 }}
       className="h-screen flex flex-col bg-sidebar border-r border-sidebar-border sticky top-0 z-40 overflow-hidden"
     >
-      {/* Logo */}
       <div className="flex items-center justify-between px-4 h-16 border-b border-sidebar-border">
         <AnimatePresence>
           {!collapsed && (
-            <motion.img
-              src={sixLogo}
-              alt="SIX AI"
-              className="h-8 object-contain"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
+            <motion.img src={sixLogo} alt="SIX AI" className="h-8 object-contain"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
           )}
         </AnimatePresence>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-        >
+        <button onClick={() => setCollapsed(!collapsed)}
+          className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
-      {/* Trial badge */}
-      {user?.plan === 'trial' && !collapsed && (
+      {profile?.plan === 'trial' && !collapsed && (
         <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-gradient-brand text-xs font-semibold text-primary-foreground text-center">
-          Trial · {Math.max(0, Math.ceil((new Date(user.trialEndsAt!).getTime() - Date.now()) / 86400000))} dias restantes
+          Trial · {Math.max(0, Math.ceil((new Date(profile.trial_ends_at!).getTime() - Date.now()) / 86400000))} dias restantes
         </div>
       )}
 
-      {/* Menu */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -82,30 +76,18 @@ export default function AppSidebar() {
           const Icon = item.icon;
 
           return (
-            <button
-              key={item.path}
-              onClick={() => !locked && navigate(item.path)}
+            <button key={item.path} onClick={() => !locked && navigate(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
-                ${isActive 
-                  ? 'bg-primary/10 text-primary glow-blue' 
-                  : locked 
-                    ? 'text-muted-foreground/40 cursor-not-allowed' 
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                }
-              `}
-              title={locked ? `Disponível no plano ${item.requiredPlan}` : item.label}
-            >
+                ${isActive ? 'bg-primary/10 text-primary glow-blue'
+                  : locked ? 'text-muted-foreground/40 cursor-not-allowed'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}
+              title={locked ? `Disponível no plano ${item.requiredPlan}` : item.label}>
               <Icon size={20} className={isActive ? 'text-primary' : ''} />
               <AnimatePresence>
                 {!collapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="whitespace-nowrap overflow-hidden"
-                  >
-                    {item.label}
-                    {locked && ' 🔒'}
+                  <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }}
+                    className="whitespace-nowrap overflow-hidden">
+                    {item.label}{locked && ' 🔒'}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -114,28 +96,22 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      {/* AI Usage */}
-      {user && !collapsed && (
+      {profile && !collapsed && (
         <div className="mx-3 mb-2 p-3 rounded-lg bg-secondary">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Uso de IA</span>
-            <span>{user.aiUsagePercent}%</span>
+            <span>{profile.ai_usage_percent}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-brand transition-all"
-              style={{ width: `${user.aiUsagePercent}%` }}
-            />
+            <div className="h-full rounded-full bg-gradient-brand transition-all"
+              style={{ width: `${profile.ai_usage_percent}%` }} />
           </div>
         </div>
       )}
 
-      {/* Logout */}
       <div className="border-t border-sidebar-border p-3">
-        <button
-          onClick={() => { logout(); navigate('/'); }}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors"
-        >
+        <button onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors">
           <LogOut size={18} />
           {!collapsed && <span>Sair</span>}
         </button>

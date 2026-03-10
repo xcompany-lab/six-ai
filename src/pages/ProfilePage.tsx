@@ -1,30 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAuth } from '@/contexts/AuthContext';
-import { Save, Upload } from 'lucide-react';
+import { Save, Upload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { profile, updateProfile } = useAuth();
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: user?.name || '',
-    brandName: user?.brandName || '',
-    niche: user?.niche || '',
-    whatsapp: user?.whatsapp || '',
-    voiceTone: user?.voiceTone || 'Profissional e acolhedor',
-    services: user?.services?.join(', ') || '',
-    address: user?.address || '',
-    businessHours: user?.businessHours || '08:00 - 18:00',
-    businessDescription: user?.businessDescription || '',
-    objective: user?.objective || '',
+    name: '',
+    brand_name: '',
+    niche: '',
+    whatsapp: '',
+    voice_tone: 'Profissional e acolhedor',
+    services: '',
+    address: '',
+    business_hours: '08:00 - 18:00',
+    business_description: '',
+    objective: '',
   });
 
-  const handleSave = () => {
-    updateProfile({
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        name: profile.name || '',
+        brand_name: profile.brand_name || '',
+        niche: profile.niche || '',
+        whatsapp: profile.whatsapp || '',
+        voice_tone: profile.voice_tone || 'Profissional e acolhedor',
+        services: profile.services?.join(', ') || '',
+        address: profile.address || '',
+        business_hours: profile.business_hours || '08:00 - 18:00',
+        business_description: profile.business_description || '',
+        objective: profile.objective || '',
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await updateProfile({
       ...form,
-      services: form.services.split(',').map(s => s.trim()),
+      services: form.services.split(',').map(s => s.trim()).filter(Boolean),
     });
+    setSaving(false);
     toast.success('Perfil atualizado com sucesso!');
   };
 
@@ -46,13 +66,12 @@ export default function ProfilePage() {
   return (
     <div>
       <PageHeader title="Perfil do Usuário" subtitle="Gerencie seus dados e configure o contexto da IA">
-        <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-          <Save size={16} /> Salvar
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Salvar
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Avatar */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-xl p-6 flex flex-col items-center">
           <div className="w-24 h-24 rounded-full bg-gradient-brand flex items-center justify-center text-3xl font-bold text-primary-foreground mb-4">
             {form.name.charAt(0) || 'U'}
@@ -62,24 +81,23 @@ export default function ProfilePage() {
           </button>
           <div className="mt-6 w-full text-center">
             <p className="text-sm text-muted-foreground">Plano atual</p>
-            <p className="text-lg font-bold text-gradient-brand capitalize">{user?.plan}</p>
+            <p className="text-lg font-bold text-gradient-brand capitalize">{profile?.plan}</p>
           </div>
         </motion.div>
 
-        {/* Form */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-2 glass rounded-xl p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Nome completo" field="name" placeholder="Seu nome" />
-            <Field label="Nome da marca" field="brandName" placeholder="Nome da empresa" />
+            <Field label="Nome da marca" field="brand_name" placeholder="Nome da empresa" />
             <Field label="Nicho" field="niche" placeholder="Ex: Estética" />
             <Field label="WhatsApp" field="whatsapp" placeholder="+55 11 99999-9999" />
-            <Field label="Tom de voz da marca" field="voiceTone" placeholder="Profissional e acolhedor" />
-            <Field label="Horário de atendimento" field="businessHours" placeholder="08:00 - 18:00" />
+            <Field label="Tom de voz da marca" field="voice_tone" placeholder="Profissional e acolhedor" />
+            <Field label="Horário de atendimento" field="business_hours" placeholder="08:00 - 18:00" />
           </div>
           <Field label="Serviços (separados por vírgula)" field="services" placeholder="Botox, Limpeza de Pele..." />
           <Field label="Endereço" field="address" placeholder="Endereço completo" />
           <Field label="Objetivo principal" field="objective" placeholder="O que deseja alcançar" />
-          <Field label="Descrição do negócio" field="businessDescription" placeholder="Descreva seu negócio para alimentar a IA..." textarea />
+          <Field label="Descrição do negócio" field="business_description" placeholder="Descreva seu negócio para alimentar a IA..." textarea />
         </motion.div>
       </div>
     </div>

@@ -23,11 +23,11 @@ const alerts = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
   return (
     <div>
-      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${user?.name?.split(' ')[0]}. Aqui está sua visão geral.`} />
+      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${profile?.name?.split(' ')[0] || 'usuário'}. Aqui está sua visão geral.`} />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -40,7 +40,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={DollarSign} label="Projeção Mensal" value="R$ 42.600" glowColor="cyan" />
         <StatCard icon={RotateCcw} label="Recuperação Follow-up" value="32%" change="+5%" trend="up" glowColor="green" />
-        <StatCard icon={Cpu} label="Uso de IA" value={`${user?.aiUsagePercent}%`} glowColor="blue" />
+        <StatCard icon={Cpu} label="Uso de IA" value={`${profile?.ai_usage_percent ?? 0}%`} glowColor="blue" />
         <StatCard icon={Clock} label="Tempo Médio Resposta" value="1.2 min" change="-18%" trend="up" glowColor="cyan" />
       </div>
 

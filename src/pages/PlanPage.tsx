@@ -5,7 +5,7 @@ import { PLAN_FEATURES, PlanType } from '@/types';
 import { Check, Zap } from 'lucide-react';
 
 export default function PlanPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const plans: PlanType[] = ['start', 'plus', 'pro'];
 
   return (
@@ -17,26 +17,26 @@ export default function PlanPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Plano atual</p>
-            <p className="text-2xl font-bold text-gradient-brand capitalize">{PLAN_FEATURES[user?.plan || 'trial'].name}</p>
-            {user?.plan === 'trial' && (
-              <p className="text-sm text-warning mt-1">Trial expira em {Math.max(0, Math.ceil((new Date(user.trialEndsAt!).getTime() - Date.now()) / 86400000))} dias</p>
+            <p className="text-2xl font-bold text-gradient-brand capitalize">{PLAN_FEATURES[(profile?.plan as PlanType) || 'trial'].name}</p>
+            {profile?.plan === 'trial' && profile.trial_ends_at && (
+              <p className="text-sm text-warning mt-1">Trial expira em {Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000))} dias</p>
             )}
           </div>
           <div className="flex gap-6">
             <div>
               <p className="text-sm text-muted-foreground">Contatos</p>
-              <p className="text-lg font-semibold text-foreground">{user?.contactsUsed?.toLocaleString()} / {user?.contactsLimit?.toLocaleString()}</p>
+              <p className="text-lg font-semibold text-foreground">{profile?.contacts_used?.toLocaleString()} / {profile?.contacts_limit?.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Uso IA</p>
-              <p className="text-lg font-semibold text-foreground">{user?.aiUsagePercent}%</p>
+              <p className="text-lg font-semibold text-foreground">{profile?.ai_usage_percent}%</p>
             </div>
           </div>
         </div>
         {/* Usage bar */}
         <div className="mt-4">
           <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-brand transition-all" style={{ width: `${user?.aiUsagePercent}%` }} />
+            <div className="h-full rounded-full bg-gradient-brand transition-all" style={{ width: `${profile?.ai_usage_percent}%` }} />
           </div>
         </div>
       </motion.div>
@@ -45,7 +45,7 @@ export default function PlanPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {plans.map((planKey, i) => {
           const plan = PLAN_FEATURES[planKey];
-          const isCurrent = user?.plan === planKey;
+          const isCurrent = profile?.plan === planKey;
           const isPopular = planKey === 'pro';
 
           return (

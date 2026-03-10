@@ -1,15 +1,46 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { PlanType, UserProfile } from '@/types';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
+import { PlanType } from '@/types';
+
+interface Profile {
+  id: string;
+  name: string;
+  brand_name: string;
+  email: string;
+  niche: string;
+  whatsapp: string;
+  services: string[];
+  objective: string;
+  plan: string;
+  trial_ends_at: string | null;
+  ai_usage_percent: number;
+  contacts_used: number;
+  contacts_limit: number;
+  avatar: string | null;
+  address: string | null;
+  business_hours: string | null;
+  voice_tone: string | null;
+  business_description: string | null;
+  is_onboarded: boolean;
+}
 
 interface AuthContextType {
-  user: UserProfile | null;
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
   isAuthenticated: boolean;
   isOnboarded: boolean;
-  login: (email: string, password: string) => void;
-  signup: (email: string, password: string, name: string) => void;
-  logout: () => void;
-  completeOnboarding: (data: Partial<UserProfile>) => void;
-  updateProfile: (data: Partial<UserProfile>) => void;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
+  updateProfile: (data: Partial<Profile>) => Promise<void>;
+  completeOnboarding: (data: Partial<Profile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   hasPlanAccess: (requiredPlan: PlanType) => boolean;
 }
 
@@ -18,71 +49,148 @@ const planHierarchy: PlanType[] = ['start', 'plus', 'pro', 'trial'];
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (_email: string, _password: string) => {
-    setUser({
-      id: '1',
-      name: 'Usuário Demo',
-      brandName: 'Clínica Exemplo',
-      email: _email,
-      niche: 'Estética',
-      whatsapp: '+5511999999999',
-      services: ['Limpeza de Pele', 'Botox', 'Preenchimento'],
-      objective: 'Agendar mais',
-      plan: 'pro',
-      trialEndsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      aiUsagePercent: 42,
-      contactsUsed: 1847,
-      contactsLimit: 5000,
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (!error && data) {
+      setProfile(data as unknown as Profile);
+    }
+    return data as unknown as Profile | null;
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase auth deadlock
+          setTimeout(() => fetchProfile(session.user.id), 0);
+        } else {
+          setProfile(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
     });
-    setIsOnboarded(true);
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message || null };
   };
 
-  const signup = (_email: string, _password: string, _name: string) => {
-    setUser({
-      id: '1',
-      name: _name,
-      brandName: '',
-      email: _email,
-      niche: '',
-      whatsapp: '',
-      services: [],
-      objective: '',
-      plan: 'trial',
-      trialEndsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      aiUsagePercent: 0,
-      contactsUsed: 0,
-      contactsLimit: 5000,
+  const signUp = async (email: string, password: string, name: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: window.location.origin,
+      },
     });
-    setIsOnboarded(false);
+    return { error: error?.message || null };
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsOnboarded(false);
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
   };
 
-  const completeOnboarding = (data: Partial<UserProfile>) => {
-    if (user) setUser({ ...user, ...data });
-    setIsOnboarded(true);
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
+    setSession(null);
   };
 
-  const updateProfile = (data: Partial<UserProfile>) => {
-    if (user) setUser({ ...user, ...data });
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error?.message || null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error?.message || null };
+  };
+
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!session?.user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update(data as any)
+      .eq('id', session.user.id);
+    if (!error) {
+      setProfile(prev => prev ? { ...prev, ...data } : prev);
+    }
+  };
+
+  const completeOnboarding = async (data: Partial<Profile>) => {
+    if (!session?.user) return;
+    const updateData = { ...data, is_onboarded: true };
+    const { error } = await supabase
+      .from('profiles')
+      .update(updateData as any)
+      .eq('id', session.user.id);
+    if (!error) {
+      setProfile(prev => prev ? { ...prev, ...updateData } : prev);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (session?.user) {
+      await fetchProfile(session.user.id);
+    }
   };
 
   const hasPlanAccess = (requiredPlan: PlanType) => {
-    if (!user) return false;
-    if (user.plan === 'trial') return true;
-    const userIdx = planHierarchy.indexOf(user.plan);
+    if (!profile) return false;
+    const userPlan = profile.plan as PlanType;
+    if (userPlan === 'trial') return true;
+    const userIdx = planHierarchy.indexOf(userPlan);
     const reqIdx = planHierarchy.indexOf(requiredPlan);
     return userIdx >= reqIdx;
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isOnboarded, login, signup, logout, completeOnboarding, updateProfile, hasPlanAccess }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user: session?.user || null,
+        profile,
+        isAuthenticated: !!session?.user,
+        isOnboarded: profile?.is_onboarded || false,
+        isLoading,
+        signIn,
+        signUp,
+        signInWithGoogle,
+        signOut,
+        resetPassword,
+        updatePassword,
+        updateProfile,
+        completeOnboarding,
+        refreshProfile,
+        hasPlanAccess,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
