@@ -36,7 +36,7 @@ export default function PlanPage() {
         {/* Usage bar */}
         <div className="mt-4">
           <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-brand transition-all" style={{ width: `${user?.aiUsagePercent}%` }} />
+            <div className="h-full rounded-full bg-gradient-brand transition-all" style={{ width: `${profile?.ai_usage_percent}%` }} />
           </div>
         </div>
       </motion.div>
