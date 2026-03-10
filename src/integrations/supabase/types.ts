@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_campaigns: {
+        Row: {
+          contacts_count: number
+          created_at: string
+          filter_days_since: number
+          filter_status: string
+          filter_type: string
+          id: string
+          message_prompt: string
+          name: string
+          responses_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contacts_count?: number
+          created_at?: string
+          filter_days_since?: number
+          filter_status?: string
+          filter_type?: string
+          id?: string
+          message_prompt?: string
+          name?: string
+          responses_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contacts_count?: number
+          created_at?: string
+          filter_days_since?: number
+          filter_status?: string
+          filter_type?: string
+          id?: string
+          message_prompt?: string
+          name?: string
+          responses_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -66,6 +111,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      follow_up_flows: {
+        Row: {
+          active: boolean
+          attempts: number
+          created_at: string
+          id: string
+          interval_time: string
+          lead_status: string
+          message_prompt: string
+          name: string
+          no_response_time: string
+          objective: string
+          trigger_description: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          attempts?: number
+          created_at?: string
+          id?: string
+          interval_time?: string
+          lead_status?: string
+          message_prompt?: string
+          name?: string
+          no_response_time?: string
+          objective?: string
+          trigger_description?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          attempts?: number
+          created_at?: string
+          id?: string
+          interval_time?: string
+          lead_status?: string
+          message_prompt?: string
+          name?: string
+          no_response_time?: string
+          objective?: string
+          trigger_description?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       leads: {
         Row: {
@@ -187,6 +280,42 @@ export type Database = {
           updated_at?: string
           voice_tone?: string | null
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      reminders_config: {
+        Row: {
+          active: boolean
+          confirmation_expected: string
+          created_at: string
+          first_reminder: string
+          id: string
+          message_template: string
+          second_reminder: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          confirmation_expected?: string
+          created_at?: string
+          first_reminder?: string
+          id?: string
+          message_template?: string
+          second_reminder?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          confirmation_expected?: string
+          created_at?: string
+          first_reminder?: string
+          id?: string
+          message_template?: string
+          second_reminder?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
