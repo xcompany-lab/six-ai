@@ -5,7 +5,7 @@ import { PLAN_FEATURES, PlanType } from '@/types';
 import { Check, Zap } from 'lucide-react';
 
 export default function PlanPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const plans: PlanType[] = ['start', 'plus', 'pro'];
 
   return (
