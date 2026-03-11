@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PLAN_FEATURES } from '@/types';
+import sixLogo from '@/assets/six-logo-nobg.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -30,8 +31,7 @@ export default function HomePage() {
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold tracking-tight">SIX <span className="text-primary">AI</span></span>
+            <img src={sixLogo} alt="SIX AI" className="h-8" />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#como-funciona" className="hover:text-foreground transition-colors">Como Funciona</a>
