@@ -1,166 +1,144 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { MessageSquare, QrCode, Wifi, WifiOff, RefreshCw, Power, Settings, Key, Globe, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, QrCode, Wifi, WifiOff, RefreshCw, Power, Globe, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWhatsAppInstance, useCreateInstance, useCheckStatus, useDisconnectInstance, useRefreshQR } from '@/hooks/use-whatsapp';
+import { useAIAgentConfig } from '@/hooks/use-ai-agent';
 
 export default function WhatsAppPage() {
-  const [status, setStatus] = useState<'connected' | 'disconnected' | 'scanning'>('disconnected');
-  const [phone, setPhone] = useState('');
-  const [evolutionConfig, setEvolutionConfig] = useState({
-    apiUrl: '',
-    instanceName: '',
-    apiKey: '',
-    webhookUrl: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`,
-  });
-  const [showConfig, setShowConfig] = useState(false);
+  const { data: instance, isLoading } = useWhatsAppInstance();
+  const { data: agentConfig } = useAIAgentConfig();
+  const createInstance = useCreateInstance();
+  const checkStatus = useCheckStatus();
+  const disconnectInstance = useDisconnectInstance();
+  const refreshQR = useRefreshQR();
+
+  const status = instance?.status || 'disconnected';
+  const qrCode = instance?.qr_code;
+
+  // Poll status while scanning
+  useEffect(() => {
+    if (status !== 'scanning' && status !== 'connecting') return;
+    const interval = setInterval(() => {
+      checkStatus.mutate();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [status]);
 
   const handleConnect = () => {
-    if (!evolutionConfig.apiUrl || !evolutionConfig.apiKey || !evolutionConfig.instanceName) {
-      toast.error('Configure a Evolution API antes de conectar');
-      setShowConfig(true);
-      return;
-    }
-    setStatus('scanning');
-    toast.info('Gerando QR Code... (integração pendente com Evolution API)');
+    createInstance.mutate(undefined, {
+      onSuccess: (data) => {
+        if (data?.status === 'already_connected') {
+          toast.success('WhatsApp já está conectado!');
+        } else {
+          toast.info('Escaneie o QR Code com seu WhatsApp');
+        }
+      },
+      onError: () => toast.error('Erro ao conectar. Tente novamente.'),
+    });
   };
 
   const handleDisconnect = () => {
-    setStatus('disconnected');
-    toast.success('WhatsApp desconectado');
+    disconnectInstance.mutate(undefined, {
+      onSuccess: () => toast.success('WhatsApp desconectado'),
+      onError: () => toast.error('Erro ao desconectar'),
+    });
   };
 
-  const handleSaveConfig = () => {
-    toast.success('Configurações da Evolution API salvas!');
-    setShowConfig(false);
+  const handleRefreshQR = () => {
+    refreshQR.mutate(undefined, {
+      onSuccess: () => toast.info('QR Code atualizado'),
+      onError: () => toast.error('Erro ao atualizar QR Code'),
+    });
   };
+
+  const isConnecting = createInstance.isPending || status === 'connecting';
+  const isScanning = status === 'scanning';
+  const isConnected = status === 'connected';
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <PageHeader title="WhatsApp" subtitle="Gerencie sua conexão com o WhatsApp via Evolution API">
-        <button onClick={() => setShowConfig(!showConfig)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground text-sm hover:bg-secondary transition-colors">
-          <Settings size={16} /> Configurar API
-        </button>
-      </PageHeader>
-
-      {/* Evolution API Config Modal */}
-      {showConfig && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-xl p-6 mb-6 space-y-4">
-          <h3 className="font-semibold text-foreground flex items-center gap-2">
-            <Key size={18} className="text-primary" /> Configuração da Evolution API
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Configure sua instância da Evolution API para conectar o WhatsApp ao agente IA.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">URL da API</label>
-              <input value={evolutionConfig.apiUrl} onChange={e => setEvolutionConfig(c => ({ ...c, apiUrl: e.target.value }))}
-                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm"
-                placeholder="https://evolution.seudominio.com" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Nome da Instância</label>
-              <input value={evolutionConfig.instanceName} onChange={e => setEvolutionConfig(c => ({ ...c, instanceName: e.target.value }))}
-                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="minha-clinica" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">API Key</label>
-              <input value={evolutionConfig.apiKey} onChange={e => setEvolutionConfig(c => ({ ...c, apiKey: e.target.value }))}
-                type="password"
-                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm"
-                placeholder="sua-api-key" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Webhook URL (auto)</label>
-              <input value={evolutionConfig.webhookUrl} readOnly
-                className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-muted-foreground font-mono text-sm cursor-not-allowed" />
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-            <AlertCircle size={16} className="text-primary flex-shrink-0" />
-            <p className="text-xs text-muted-foreground">
-              As credenciais da Evolution API serão armazenadas como secrets seguros no Supabase. 
-              O webhook será configurado para receber mensagens e encaminhar ao agente IA.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={handleSaveConfig}
-              className="px-5 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-              Salvar Configuração
-            </button>
-            <button onClick={() => setShowConfig(false)}
-              className="px-4 py-2 rounded-lg border border-border text-foreground text-sm hover:bg-secondary transition-colors">
-              Cancelar
-            </button>
-          </div>
-        </motion.div>
-      )}
+      <PageHeader title="WhatsApp" subtitle="Conecte seu WhatsApp ao agente IA em um clique" />
 
       {/* Connection Status */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className={`glass rounded-xl p-6 mb-6 ${status === 'connected' ? 'border-accent/20' : 'border-destructive/20'}`}>
+        className={`glass rounded-xl p-6 mb-6 ${isConnected ? 'border-accent/20' : 'border-destructive/20'}`}>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl ${status === 'connected' ? 'bg-accent/10' : 'bg-destructive/10'}`}>
-              {status === 'connected' ? <Wifi size={24} className="text-accent" /> : <WifiOff size={24} className="text-destructive" />}
+            <div className={`p-3 rounded-xl ${isConnected ? 'bg-accent/10' : 'bg-destructive/10'}`}>
+              {isConnected ? <Wifi size={24} className="text-accent" /> : <WifiOff size={24} className="text-destructive" />}
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">
-                {status === 'connected' ? 'WhatsApp Conectado' : status === 'scanning' ? 'Aguardando QR Code' : 'Desconectado'}
+                {isConnected ? 'WhatsApp Conectado' : isScanning ? 'Aguardando leitura do QR Code' : isConnecting ? 'Criando instância...' : 'Desconectado'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {status === 'connected' ? `Número: ${phone}` : 'Conecte seu WhatsApp para iniciar'}
+                {isConnected ? `Instância: ${instance?.instance_name}` : isScanning ? 'Escaneie o QR Code abaixo' : 'Conecte para o agente IA atender via WhatsApp'}
               </p>
             </div>
           </div>
-          <button onClick={() => status === 'connected' ? handleDisconnect() : handleConnect()}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              status === 'connected' 
-                ? 'border border-destructive/30 text-destructive hover:bg-destructive/10' 
+          <button
+            onClick={() => isConnected ? handleDisconnect() : handleConnect()}
+            disabled={isConnecting || disconnectInstance.isPending}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+              isConnected
+                ? 'border border-destructive/30 text-destructive hover:bg-destructive/10'
                 : 'bg-gradient-brand text-primary-foreground hover:opacity-90'
             }`}>
-            {status === 'connected' ? <><Power size={14} /> Desconectar</> : <><RefreshCw size={14} /> Conectar</>}
+            {isConnecting ? <><Loader2 size={14} className="animate-spin" /> Conectando...</>
+              : isConnected ? <><Power size={14} /> Desconectar</>
+              : <><RefreshCw size={14} /> Conectar</>}
           </button>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* QR Code / Connection */}
+        {/* QR Code */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass rounded-xl p-6">
           <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <QrCode size={18} className="text-primary" /> Conexão
           </h3>
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Número com DDI + DDD</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono mb-4"
-              placeholder="+55 11 99999-9999" />
-          </div>
-          {status === 'scanning' && (
-            <div className="w-48 h-48 mx-auto rounded-xl bg-secondary border border-border flex items-center justify-center">
-              <div className="text-center">
-                <QrCode size={64} className="text-muted-foreground mx-auto mb-2 animate-pulse" />
-                <p className="text-xs text-muted-foreground">Escaneie com WhatsApp</p>
-              </div>
+
+          {isScanning && qrCode ? (
+            <div className="text-center space-y-4">
+              <img
+                src={qrCode.startsWith('data:') ? qrCode : `data:image/png;base64,${qrCode}`}
+                alt="QR Code WhatsApp"
+                className="w-64 h-64 mx-auto rounded-xl border border-border"
+              />
+              <p className="text-sm text-muted-foreground">Abra o WhatsApp → Aparelhos conectados → Conectar</p>
+              <button onClick={handleRefreshQR} disabled={refreshQR.isPending}
+                className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto">
+                <RefreshCw size={12} className={refreshQR.isPending ? 'animate-spin' : ''} /> Atualizar QR Code
+              </button>
             </div>
-          )}
-          {status === 'connected' && (
+          ) : isScanning && !qrCode ? (
+            <div className="text-center py-8">
+              <Loader2 size={48} className="mx-auto text-primary animate-spin mb-3" />
+              <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
+            </div>
+          ) : isConnected ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
                 <MessageSquare size={28} className="text-accent" />
               </div>
               <p className="text-sm text-muted-foreground">Instância ativa e recebendo mensagens</p>
             </div>
-          )}
-          {status === 'disconnected' && (
+          ) : (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
                 <WifiOff size={28} className="text-muted-foreground" />
               </div>
-              <p className="text-sm text-muted-foreground">Configure a API e conecte para começar</p>
+              <p className="text-sm text-muted-foreground">Clique em "Conectar" para começar</p>
             </div>
           )}
         </motion.div>
@@ -172,10 +150,10 @@ export default function WhatsAppPage() {
           </h3>
           <div className="space-y-3">
             {[
-              { label: 'Agente IA configurado', done: true, desc: 'Prompt, tom de voz e base de conhecimento' },
-              { label: 'Evolution API configurada', done: !!evolutionConfig.apiUrl && !!evolutionConfig.apiKey, desc: 'URL, instância e API key' },
-              { label: 'Webhook registrado', done: false, desc: 'Receber mensagens automaticamente' },
-              { label: 'WhatsApp conectado', done: status === 'connected', desc: 'QR Code escaneado e ativo' },
+              { label: 'Agente IA configurado', done: !!agentConfig?.active, desc: 'Prompt, tom de voz e base de conhecimento' },
+              { label: 'Servidor Evolution API', done: true, desc: 'Conectado ao servidor compartilhado' },
+              { label: 'Instância criada', done: !!instance, desc: instance ? `Nome: ${instance.instance_name}` : 'Criada ao clicar Conectar' },
+              { label: 'WhatsApp conectado', done: isConnected, desc: 'QR Code escaneado e ativo' },
               { label: 'Memória de contatos ativa', done: true, desc: 'Contexto persistente por contato' },
             ].map((item, i) => (
               <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.done ? 'bg-accent/5' : 'bg-secondary/50'}`}>
@@ -186,16 +164,6 @@ export default function WhatsAppPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </motion.div>
-
-        {/* Logs */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass rounded-xl p-6 lg:col-span-2">
-          <h3 className="font-semibold text-foreground mb-4">Logs Recentes</h3>
-          <div className="text-center py-8">
-            <MessageSquare size={48} className="mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground">Nenhum log ainda</p>
-            <p className="text-xs text-muted-foreground mt-1">Os logs aparecerão quando o webhook estiver ativo</p>
           </div>
         </motion.div>
       </div>
