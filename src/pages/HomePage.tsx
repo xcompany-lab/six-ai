@@ -39,7 +39,7 @@ export default function HomePage() {
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>Login</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>Login</Button>
             <Button size="sm" className="bg-gradient-brand text-primary-foreground" asChild>
               <a href={trialUrl} target="_blank" rel="noopener noreferrer">Teste Grátis</a>
             </Button>
