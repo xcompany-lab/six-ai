@@ -14,7 +14,7 @@ type Section = 'menu' | 'branding' | 'notifications' | 'integrations' | 'permiss
 const sections = [
   { id: 'branding' as Section, label: 'Branding', icon: Palette, description: 'Logo, cores e identidade visual da conta' },
   { id: 'notifications' as Section, label: 'Notificações', icon: Bell, description: 'E-mail, push e alertas do sistema' },
-  { id: 'integrations' as Section, label: 'Integrações', icon: Plug, description: 'Evolution API, Google Agenda, Kiwify' },
+  { id: 'integrations' as Section, label: 'Integrações', icon: Plug, description: 'Evolution API, Google Agenda, Ticto' },
   { id: 'permissions' as Section, label: 'Permissões', icon: Shield, description: 'Controle de acesso e segurança' },
   { id: 'status' as Section, label: 'Status Técnico', icon: Server, description: 'Saúde dos serviços e conexões' },
 ];
