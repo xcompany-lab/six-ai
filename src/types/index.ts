@@ -93,7 +93,7 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'R$ 97/mês',
     contactsLimit: 3000,
     features: ['Tudo do Start', 'Agendamentos com IA', 'Google Agenda', 'Lembretes com IA', 'Até 3.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PLUS',
+    checkoutUrl: 'https://checkout.ticto.app/ODA8597D7',
   },
   pro: {
     name: 'Pro',
