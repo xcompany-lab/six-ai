@@ -167,7 +167,10 @@ export default function PlanPage() {
           <h3 className="text-lg font-semibold text-foreground">Recarga Pré-Paga via Pix</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">Atingiu o limite de IA? Recarregue para continuar usando sem trocar de plano.</p>
-        <button onClick={() => toast.info('Integração de pagamento Pix será configurada em breve')}
+        <button onClick={() => {
+            const url = `${KIWIFY_RECHARGE_URL}?email=${encodeURIComponent(profile?.email || '')}`;
+            window.open(url, '_blank');
+          }}
           className="px-6 py-2.5 rounded-lg border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/10 transition-colors">
           Recarregar Agora
         </button>

@@ -74,7 +74,7 @@ export interface FollowUpFlow {
   active: boolean;
 }
 
-export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; contactsLimit: number; features: string[] }> = {
+export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; contactsLimit: number; features: string[]; checkoutUrl?: string }> = {
   trial: {
     name: 'Trial Free',
     price: 'Grátis por 5 dias',
@@ -86,17 +86,22 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'R$ 49/mês',
     contactsLimit: 1000,
     features: ['Atendente IA', 'Treinamento do agente', 'Visualização da agenda', 'Conexão WhatsApp', 'Até 1.000 contatos'],
+    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_START',
   },
   plus: {
     name: 'Plus',
     price: 'R$ 97/mês',
     contactsLimit: 3000,
     features: ['Tudo do Start', 'Agendamentos com IA', 'Google Agenda', 'Lembretes com IA', 'Até 3.000 contatos'],
+    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PLUS',
   },
   pro: {
     name: 'Pro',
     price: 'R$ 197/mês',
     contactsLimit: 5000,
     features: ['Tudo do Plus', 'Follow-up com IA', 'Ativação de base', 'Kanban / CRM', 'Insight Sales System', 'Até 5.000 contatos'],
+    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PRO',
   },
 };
+
+export const KIWIFY_RECHARGE_URL = 'https://pay.kiwify.com.br/SEU_LINK_RECARGA';

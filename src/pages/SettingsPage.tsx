@@ -94,7 +94,7 @@ export default function SettingsPage() {
             {[
               { name: 'Evolution API (WhatsApp)', status: 'Não configurado', connected: false },
               { name: 'Google Agenda', status: 'Não conectado', connected: false },
-              { name: 'Kiwify / Stripe', status: 'Não configurado', connected: false },
+              { name: 'Kiwify (Pagamentos)', status: 'Webhook configurado', connected: true },
             ].map(int => (
               <div key={int.name} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
                 <div>
@@ -104,6 +104,20 @@ export default function SettingsPage() {
                 <div className={`w-2.5 h-2.5 rounded-full ${int.connected ? 'bg-accent' : 'bg-muted-foreground'}`} />
               </div>
             ))}
+
+            <div className="mt-4 p-4 rounded-lg bg-secondary/50">
+              <p className="text-sm font-medium text-foreground mb-1">URL do Webhook Kiwify</p>
+              <p className="text-xs text-muted-foreground mb-2">Cole esta URL no painel da Kiwify → Configurações → Webhooks</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-background p-2 rounded border border-border break-all">
+                  https://tzcstwlnflhiqzkmouqd.supabase.co/functions/v1/kiwify-webhook
+                </code>
+                <Button size="sm" variant="outline" onClick={() => {
+                  navigator.clipboard.writeText('https://tzcstwlnflhiqzkmouqd.supabase.co/functions/v1/kiwify-webhook');
+                  toast.success('URL copiada!');
+                }}>Copiar</Button>
+              </div>
+            </div>
           </motion.div>
         )}
 
