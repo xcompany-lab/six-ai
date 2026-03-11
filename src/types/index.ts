@@ -80,28 +80,29 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'Grátis por 5 dias',
     contactsLimit: 5000,
     features: ['Acesso completo por 5 dias', 'Todos os recursos Pro', 'Converte automaticamente para Pro'],
+    checkoutUrl: 'https://checkout.ticto.app/O34DA3017',
   },
   start: {
     name: 'Start',
     price: 'R$ 49/mês',
     contactsLimit: 1000,
     features: ['Atendente IA', 'Treinamento do agente', 'Visualização da agenda', 'Conexão WhatsApp', 'Até 1.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_START',
+    checkoutUrl: 'https://checkout.ticto.app/OD0B8D469',
   },
   plus: {
     name: 'Plus',
     price: 'R$ 97/mês',
     contactsLimit: 3000,
     features: ['Tudo do Start', 'Agendamentos com IA', 'Google Agenda', 'Lembretes com IA', 'Até 3.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PLUS',
+    checkoutUrl: 'https://checkout.ticto.app/ODA8597D7',
   },
   pro: {
     name: 'Pro',
     price: 'R$ 197/mês',
     contactsLimit: 5000,
     features: ['Tudo do Plus', 'Follow-up com IA', 'Ativação de base', 'Kanban / CRM', 'Insight Sales System', 'Até 5.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PRO',
+    checkoutUrl: 'https://checkout.ticto.app/O19D97FF2',
   },
 };
 
-export const KIWIFY_RECHARGE_URL = 'https://pay.kiwify.com.br/SEU_LINK_RECARGA';
+export const TICTO_RECHARGE_URL = 'https://checkout.ticto.app/O34DA3017';

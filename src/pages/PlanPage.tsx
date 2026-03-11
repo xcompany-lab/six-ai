@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBillingUsage } from '@/hooks/use-billing';
-import { PLAN_FEATURES, PlanType, KIWIFY_RECHARGE_URL } from '@/types';
+import { PLAN_FEATURES, PlanType, TICTO_RECHARGE_URL } from '@/types';
 import { Check, Zap, AlertTriangle, Users, Cpu, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -168,7 +168,7 @@ export default function PlanPage() {
         </div>
         <p className="text-sm text-muted-foreground mb-4">Atingiu o limite de IA? Recarregue para continuar usando sem trocar de plano.</p>
         <button onClick={() => {
-            const url = `${KIWIFY_RECHARGE_URL}?email=${encodeURIComponent(profile?.email || '')}`;
+            const url = `${TICTO_RECHARGE_URL}?email=${encodeURIComponent(profile?.email || '')}`;
             window.open(url, '_blank');
           }}
           className="px-6 py-2.5 rounded-lg border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/10 transition-colors">
