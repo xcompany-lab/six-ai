@@ -104,7 +104,10 @@ export default function PlanPage() {
               </ul>
               <button
                 onClick={() => {
-                  if (!isCurrent) toast.info('Integração de pagamento será configurada em breve');
+                  if (!isCurrent && plan.checkoutUrl) {
+                    const url = `${plan.checkoutUrl}?email=${encodeURIComponent(profile?.email || '')}`;
+                    window.open(url, '_blank');
+                  }
                 }}
                 className={`w-full py-3 rounded-lg font-semibold text-sm transition-all ${
                   isCurrent 
