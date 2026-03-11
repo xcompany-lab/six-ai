@@ -13,10 +13,7 @@ serve(async (req) => {
     const body = await req.json();
     console.log("Webhook received:", JSON.stringify(body).slice(0, 500));
 
-    // Evolution API sends different event types
     const event = body.event;
-    
-    // Only process incoming text messages
     if (event !== "messages.upsert") {
       return new Response(JSON.stringify({ status: "ignored", event }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -31,8 +28,8 @@ serve(async (req) => {
     }
 
     const contactPhone = messageData.key?.remoteJid?.replace("@s.whatsapp.net", "") || "";
-    const messageText = messageData.message?.conversation 
-      || messageData.message?.extendedTextMessage?.text 
+    const messageText = messageData.message?.conversation
+      || messageData.message?.extendedTextMessage?.text
       || "";
     const contactName = messageData.pushName || contactPhone;
     const instanceName = body.instance || "";
@@ -43,31 +40,56 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Message from ${contactName} (${contactPhone}): ${messageText}`);
+    console.log(`Message from ${contactName} (${contactPhone}) on instance ${instanceName}: ${messageText}`);
 
-    // Use service role to find the user who owns this instance
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Find user by matching the instance - stored in profiles.whatsapp or we look up all active agents
-    // For now, we'll look for users with active AI agents
-    const { data: agents, error: agentError } = await supabaseAdmin
-      .from("ai_agent_config")
-      .select("user_id, prompt, voice_tone, energy, faq, knowledge_base, pitch, objections, out_of_scope, prohibited_words, opening_message, fallback_message, active")
-      .eq("active", true);
+    // Multi-tenant: resolve user by instance name
+    let userId: string | null = null;
 
-    if (agentError || !agents?.length) {
-      console.error("No active agents found:", agentError);
-      return new Response(JSON.stringify({ status: "no_agent" }), {
+    if (instanceName) {
+      const { data: instance } = await supabaseAdmin
+        .from("whatsapp_instances")
+        .select("user_id")
+        .eq("instance_name", instanceName)
+        .maybeSingle();
+      if (instance) userId = instance.user_id;
+    }
+
+    // Fallback: first active agent (backward compat)
+    if (!userId) {
+      const { data: agents } = await supabaseAdmin
+        .from("ai_agent_config")
+        .select("user_id")
+        .eq("active", true)
+        .limit(1);
+      if (agents?.length) userId = agents[0].user_id;
+    }
+
+    if (!userId) {
+      console.error("No user found for instance:", instanceName);
+      return new Response(JSON.stringify({ status: "no_user" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // For MVP, use first active agent. In production, match by instance/phone
-    const agent = agents[0];
-    const userId = agent.user_id;
+    // Load agent config
+    const { data: agent } = await supabaseAdmin
+      .from("ai_agent_config")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (!agent) {
+      console.error("No active agent for user:", userId);
+      return new Response(JSON.stringify({ status: "no_agent" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Load profile
     const { data: profile } = await supabaseAdmin
@@ -121,7 +143,7 @@ serve(async (req) => {
 
     const systemPrompt = `${agent.prompt || "Você é um assistente inteligente de atendimento."}\n\nTom de voz: ${agent.voice_tone || "Profissional e empático"}\nEnergia: ${agent.energy || "Moderada"}${agent.prohibited_words ? `\nPalavras proibidas: ${agent.prohibited_words}` : ""}${businessContext}${memoryContext}${agent.faq ? `\n\nFAQ:\n${agent.faq}` : ""}${agent.knowledge_base ? `\n\nBase de Conhecimento:\n${agent.knowledge_base}` : ""}${agent.pitch ? `\n\nPitch:\n${agent.pitch}` : ""}${agent.objections ? `\n\nObjeções:\n${agent.objections}` : ""}${agent.out_of_scope ? `\n\nFora de escopo: ${agent.out_of_scope}` : ""}\n\nIMPORTANTE: Responda de forma concisa e natural, como em uma conversa de WhatsApp. Máximo 3 parágrafos curtos.`;
 
-    // Call AI gateway
+    // Call AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -154,13 +176,15 @@ serve(async (req) => {
 
     console.log(`Reply to ${contactPhone}: ${replyText.slice(0, 100)}...`);
 
-    // Send reply via Evolution API
+    // Send reply via Evolution API using global secrets
     const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
     const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
-    const EVOLUTION_INSTANCE = Deno.env.get("EVOLUTION_INSTANCE_NAME");
 
-    if (EVOLUTION_API_URL && EVOLUTION_API_KEY && EVOLUTION_INSTANCE) {
-      const sendUrl = `${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE}`;
+    // Use the instance name from webhook payload (or from DB lookup)
+    const replyInstance = instanceName || `six-${userId.slice(0, 8)}`;
+
+    if (EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+      const sendUrl = `${EVOLUTION_API_URL}/message/sendText/${replyInstance}`;
       const sendResp = await fetch(sendUrl, {
         method: "POST",
         headers: {
@@ -178,13 +202,13 @@ serve(async (req) => {
         console.error("Evolution API send error:", sendResp.status, sendErr);
       } else {
         console.log("Reply sent successfully via Evolution API");
-        await sendResp.text(); // consume body
+        await sendResp.text();
       }
     } else {
-      console.warn("Evolution API not configured, reply not sent");
+      console.warn("Evolution API not configured");
     }
 
-    // Update contact memory with AI summary
+    // Update contact memory
     if (memory?.id) {
       await supabaseAdmin
         .from("contact_memory")
