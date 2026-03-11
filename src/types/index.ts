@@ -86,7 +86,7 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'R$ 49/mês',
     contactsLimit: 1000,
     features: ['Atendente IA', 'Treinamento do agente', 'Visualização da agenda', 'Conexão WhatsApp', 'Até 1.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_START',
+    checkoutUrl: 'https://checkout.ticto.app/OD0B8D469',
   },
   plus: {
     name: 'Plus',
