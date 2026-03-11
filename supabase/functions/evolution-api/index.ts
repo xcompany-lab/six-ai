@@ -10,7 +10,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
@@ -29,7 +28,8 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
     const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL")!;
     const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY")!;
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -39,18 +39,39 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const instanceName = `six-${userId.slice(0, 8)}`;
+    // For create action, use user-provided name; otherwise look up from DB
+    let instanceName: string;
 
-    const evoFetch = (path: string, body?: unknown) =>
+    if (action === "create") {
+      const rawName = (body.name || "").trim();
+      if (!rawName) {
+        return new Response(JSON.stringify({ error: "Nome é obrigatório" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      instanceName = rawName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    } else {
+      // Lookup existing instance name from DB
+      const { data: inst } = await supabaseAdmin
+        .from("whatsapp_instances")
+        .select("instance_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!inst) {
+        return new Response(JSON.stringify({ error: "Nenhuma instância encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      instanceName = inst.instance_name;
+    }
+
+    const evoFetch = (path: string, fetchBody?: unknown) =>
       fetch(`${EVOLUTION_API_URL}${path}`, {
-        method: body ? "POST" : "GET",
+        method: fetchBody ? "POST" : "GET",
         headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
-        ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(fetchBody ? { body: JSON.stringify(fetchBody) } : {}),
       });
 
     // ── CREATE ──
     if (action === "create") {
-      // Check if instance already exists in DB
+      const phone = (body.phone || "").replace(/\D/g, "");
+
       const { data: existing } = await supabaseAdmin
         .from("whatsapp_instances")
         .select("*")
@@ -63,7 +84,6 @@ serve(async (req) => {
         });
       }
 
-      // Create instance on Evolution API
       const createResp = await evoFetch("/instance/create", {
         instanceName,
         integration: "WHATSAPP-BAILEYS",
@@ -80,11 +100,9 @@ serve(async (req) => {
       console.log("Evolution create response:", JSON.stringify(createData).slice(0, 500));
 
       if (!createResp.ok) {
-        // Instance might already exist on Evolution side, try to connect
         console.log("Create failed, trying to connect existing instance");
       }
 
-      // Upsert instance in DB
       await supabaseAdmin
         .from("whatsapp_instances")
         .upsert({
@@ -92,10 +110,10 @@ serve(async (req) => {
           instance_name: instanceName,
           instance_id: createData?.instance?.instanceId || createData?.instanceId || null,
           status: "connecting",
+          phone: phone || null,
           qr_code: null,
         }, { onConflict: "user_id" });
 
-      // Get QR code
       const qrResp = await evoFetch(`/instance/connect/${instanceName}`);
       const qrData = await qrResp.json();
       console.log("QR response status:", qrResp.status);
@@ -155,12 +173,10 @@ serve(async (req) => {
 
     // ── DISCONNECT ──
     if (action === "disconnect") {
-      // Logout instance
       try {
         await evoFetch(`/instance/logout/${instanceName}`, {});
       } catch (e) { console.log("Logout error (non-fatal):", e); }
 
-      // Delete instance from Evolution
       try {
         const delResp = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
           method: "DELETE",
@@ -171,7 +187,7 @@ serve(async (req) => {
 
       await supabaseAdmin
         .from("whatsapp_instances")
-        .update({ status: "disconnected", qr_code: null, phone: null })
+        .delete()
         .eq("user_id", userId);
 
       return new Response(JSON.stringify({ status: "disconnected" }), {
