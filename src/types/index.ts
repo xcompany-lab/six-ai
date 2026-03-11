@@ -100,7 +100,7 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'R$ 197/mês',
     contactsLimit: 5000,
     features: ['Tudo do Plus', 'Follow-up com IA', 'Ativação de base', 'Kanban / CRM', 'Insight Sales System', 'Até 5.000 contatos'],
-    checkoutUrl: 'https://pay.kiwify.com.br/SEU_LINK_PRO',
+    checkoutUrl: 'https://checkout.ticto.app/O19D97FF2',
   },
 };
 
