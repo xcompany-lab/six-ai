@@ -8,6 +8,7 @@ const corsHeaders = {
 
 // Map Ticto offer codes (from checkout URLs) to internal plans
 const OFFER_PLAN_MAP: Record<string, { plan: string; contactsLimit: number }> = {
+  "O34DA3017": { plan: "trial", contactsLimit: 5000 },
   "OD0B8D469": { plan: "start", contactsLimit: 1000 },
   "ODA8597D7": { plan: "plus", contactsLimit: 3000 },
   "O19D97FF2": { plan: "pro", contactsLimit: 5000 },
@@ -21,6 +22,8 @@ const CANCELLATION_STATUSES = [
   "close",
   "subscription_canceled",
 ];
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -50,6 +53,7 @@ Deno.serve(async (req) => {
 
     const status: string = body.status || "";
     const email: string = body.customer?.email || "";
+    const customerName: string = body.customer?.name || "";
     // offer_code matches the checkout URL code (e.g. "OD0B8D469")
     const offerCode: string =
       body.item?.offer_code ||
@@ -79,6 +83,30 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Try to create user via invite (sends email with password setup link)
+      let userCreated = false;
+      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
+        data: { name: customerName },
+      });
+
+      if (inviteError) {
+        if (inviteError.message?.includes("already been registered") || inviteError.message?.includes("already exists")) {
+          console.log(`User already exists: ${email}, proceeding with plan update`);
+        } else {
+          console.error("Error inviting user:", inviteError);
+          return new Response(
+            JSON.stringify({ error: "Failed to create user account", details: inviteError.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        userCreated = true;
+        console.log(`User invited successfully: ${email}`);
+        // Wait for handle_new_user trigger to create profile
+        await delay(2000);
+      }
+
+      // Update profile with the purchased plan
       const { data, error } = await supabase
         .from("profiles")
         .update({ plan: planInfo.plan, contacts_limit: planInfo.contactsLimit })
@@ -94,9 +122,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`Plan activated: ${data.email} → ${planInfo.plan}`);
+      console.log(`Plan activated: ${data.email} → ${planInfo.plan} (new user: ${userCreated})`);
       return new Response(
-        JSON.stringify({ success: true, plan: planInfo.plan, userId: data.id }),
+        JSON.stringify({ success: true, plan: planInfo.plan, userId: data.id, userCreated }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

@@ -7,15 +7,13 @@ import { toast } from 'sonner';
 import sixLogo from '@/assets/six-logo-dark.png';
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
+  const { signIn, signInWithGoogle, resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,21 +31,10 @@ export default function LoginPage() {
       return;
     }
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      setLoading(false);
-      if (error) {
-        toast.error(error);
-      }
-      // Navigation handled by App.tsx route logic
-    } else {
-      const { error } = await signUp(email, password, name);
-      setLoading(false);
-      if (error) {
-        toast.error(error);
-      } else {
-        toast.success('Conta criada! Verifique seu e-mail para confirmar.');
-      }
+    const { error } = await signIn(email, password);
+    setLoading(false);
+    if (error) {
+      toast.error(error);
     }
   };
 
@@ -94,14 +81,12 @@ export default function LoginPage() {
 
           <div className="glass-strong rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-foreground mb-1">
-              {isForgotPassword ? 'Recuperar senha' : isLogin ? 'Bem-vindo de volta' : 'Crie sua conta'}
+              {isForgotPassword ? 'Recuperar senha' : 'Bem-vindo de volta'}
             </h2>
             <p className="text-muted-foreground text-sm mb-8">
               {isForgotPassword
                 ? 'Informe seu e-mail para receber o link de recuperação'
-                : isLogin
-                  ? 'Entre na sua conta SIX AI'
-                  : 'Comece seu trial gratuito de 5 dias'}
+                : 'Entre na sua conta SIX AI'}
             </p>
 
             {!isForgotPassword && (
@@ -122,14 +107,6 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && !isForgotPassword && (
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">Nome</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    placeholder="Seu nome completo" required={!isLogin} />
-                </div>
-              )}
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">E-mail</label>
                 <div className="relative">
@@ -140,28 +117,28 @@ export default function LoginPage() {
                 </div>
               </div>
               {!isForgotPassword && (
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">Senha</label>
-                  <div className="relative">
-                    <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      placeholder="••••••••" required minLength={6} />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Senha</label>
+                    <div className="relative">
+                      <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-12 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        placeholder="••••••••" required minLength={6} />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-              {isLogin && !isForgotPassword && (
-                <div className="text-right">
-                  <button type="button" onClick={() => setIsForgotPassword(true)} className="text-sm text-primary hover:underline">Esqueceu a senha?</button>
-                </div>
+                  <div className="text-right">
+                    <button type="button" onClick={() => setIsForgotPassword(true)} className="text-sm text-primary hover:underline">Esqueceu a senha?</button>
+                  </div>
+                </>
               )}
               <button type="submit" disabled={loading}
                 className="w-full py-3 rounded-lg bg-gradient-brand text-primary-foreground font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
                 {loading && <Loader2 size={18} className="animate-spin" />}
-                {isForgotPassword ? 'Enviar link de recuperação' : isLogin ? 'Entrar' : 'Criar Conta Grátis'}
+                {isForgotPassword ? 'Enviar link de recuperação' : 'Entrar'}
               </button>
             </form>
 
@@ -170,9 +147,9 @@ export default function LoginPage() {
                 <button onClick={() => setIsForgotPassword(false)} className="text-primary hover:underline font-medium">Voltar ao login</button>
               ) : (
                 <>
-                  {isLogin ? 'Não tem conta? ' : 'Já tem conta? '}
-                  <button onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline font-medium">
-                    {isLogin ? 'Criar conta grátis' : 'Fazer login'}
+                  Não tem conta?{' '}
+                  <button onClick={() => navigate('/')} className="text-primary hover:underline font-medium">
+                    Conheça nossos planos
                   </button>
                 </>
               )}
