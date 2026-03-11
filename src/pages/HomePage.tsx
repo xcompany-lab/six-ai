@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PLAN_FEATURES } from '@/types';
+import sixLogo from '@/assets/six-logo-nobg.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
