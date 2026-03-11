@@ -219,8 +219,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const fallbackAuthContext: AuthContextType = {
+  session: null,
+  user: null,
+  profile: null,
+  isAuthenticated: false,
+  isOnboarded: false,
+  isLoading: false,
+  signIn: async () => ({ error: 'AuthProvider não inicializado' }),
+  signUp: async () => ({ error: 'AuthProvider não inicializado' }),
+  signInWithGoogle: async () => {},
+  signOut: async () => {},
+  resetPassword: async () => ({ error: 'AuthProvider não inicializado' }),
+  updatePassword: async () => ({ error: 'AuthProvider não inicializado' }),
+  updateProfile: async () => {},
+  completeOnboarding: async () => {},
+  refreshProfile: async () => {},
+  hasPlanAccess: () => false,
+};
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) {
+    console.error('AuthContext ausente na árvore React; usando fallback seguro.');
+    return fallbackAuthContext;
+  }
   return ctx;
 };
