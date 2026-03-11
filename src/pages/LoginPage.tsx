@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import sixLogo from '@/assets/six-logo-dark.png';
+import sixLogo from '@/assets/six-logo-nobg.png';
 
 export default function LoginPage() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
