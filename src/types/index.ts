@@ -105,4 +105,4 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
   },
 };
 
-export const KIWIFY_RECHARGE_URL = 'https://pay.kiwify.com.br/SEU_LINK_RECARGA';
+export const TICTO_RECHARGE_URL = 'https://checkout.ticto.app/O34DA3017';
