@@ -53,9 +53,14 @@ function AppRoutes() {
       <Route path="/" element={
         isAuthenticated
           ? (isOnboarded ? <Navigate to="/app" replace /> : <Navigate to="/onboarding" replace />)
-          : <LoginPage />
+          : <HomePage />
       } />
       <Route path="/home" element={<HomePage />} />
+      <Route path="/login" element={
+        isAuthenticated
+          ? (isOnboarded ? <Navigate to="/app" replace /> : <Navigate to="/onboarding" replace />)
+          : <LoginPage />
+      } />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/onboarding" element={
         isAuthenticated ? <OnboardingPage /> : <Navigate to="/" replace />
