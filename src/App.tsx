@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
+import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -54,6 +55,7 @@ function AppRoutes() {
           ? (isOnboarded ? <Navigate to="/app" replace /> : <Navigate to="/onboarding" replace />)
           : <LoginPage />
       } />
+      <Route path="/home" element={<HomePage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/onboarding" element={
         isAuthenticated ? <OnboardingPage /> : <Navigate to="/" replace />
