@@ -80,6 +80,7 @@ export const PLAN_FEATURES: Record<PlanType, { name: string; price: string; cont
     price: 'Grátis por 5 dias',
     contactsLimit: 5000,
     features: ['Acesso completo por 5 dias', 'Todos os recursos Pro', 'Converte automaticamente para Pro'],
+    checkoutUrl: 'https://checkout.ticto.app/O34DA3017',
   },
   start: {
     name: 'Start',
