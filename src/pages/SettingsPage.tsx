@@ -94,7 +94,7 @@ export default function SettingsPage() {
             {[
               { name: 'Evolution API (WhatsApp)', status: 'Não configurado', connected: false },
               { name: 'Google Agenda', status: 'Não conectado', connected: false },
-              { name: 'Kiwify (Pagamentos)', status: 'Webhook configurado', connected: true },
+              { name: 'Ticto (Pagamentos)', status: 'Webhook configurado', connected: true },
             ].map(int => (
               <div key={int.name} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
                 <div>
