@@ -31,14 +31,11 @@ export function useWhatsAppInstance() {
   });
 }
 
-async function callEvolutionApi(action: string) {
+async function callEvolutionApi(body: Record<string, unknown>) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Não autenticado');
 
-  const resp = await supabase.functions.invoke('evolution-api', {
-    body: { action },
-  });
-
+  const resp = await supabase.functions.invoke('evolution-api', { body });
   if (resp.error) throw resp.error;
   return resp.data;
 }
@@ -46,7 +43,8 @@ async function callEvolutionApi(action: string) {
 export function useCreateInstance() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => callEvolutionApi('create'),
+    mutationFn: (params: { name: string; phone: string }) =>
+      callEvolutionApi({ action: 'create', name: params.name, phone: params.phone }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instance'] });
     },
@@ -56,7 +54,7 @@ export function useCreateInstance() {
 export function useRefreshQR() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => callEvolutionApi('connect'),
+    mutationFn: () => callEvolutionApi({ action: 'connect' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instance'] });
     },
@@ -66,7 +64,7 @@ export function useRefreshQR() {
 export function useCheckStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => callEvolutionApi('status'),
+    mutationFn: () => callEvolutionApi({ action: 'status' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instance'] });
     },
@@ -76,7 +74,7 @@ export function useCheckStatus() {
 export function useDisconnectInstance() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => callEvolutionApi('disconnect'),
+    mutationFn: () => callEvolutionApi({ action: 'disconnect' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instance'] });
     },
