@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { PlanType } from '@/types';
@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -65,26 +66,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data as unknown as Profile | null;
   };
 
+  const hydrateSession = async (newSession: Session | null) => {
+    setSession(newSession);
+    if (newSession?.user) {
+      await fetchProfile(newSession.user.id);
+    } else {
+      setProfile(null);
+    }
+  };
+
   useEffect(() => {
+    // 1. Initial session check
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+      if (!initializedRef.current) {
+        initializedRef.current = true;
+        await hydrateSession(initialSession);
+        setIsLoading(false);
+      }
+    });
+
+    // 2. Auth state changes (fires after sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
+      async (event, newSession) => {
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
           setProfile(null);
+          setIsLoading(false);
+          return;
         }
+
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(newSession);
+          return;
+        }
+
+        // SIGNED_IN, INITIAL_SESSION, PASSWORD_RECOVERY, USER_UPDATED
+        if (!initializedRef.current) {
+          initializedRef.current = true;
+        }
+        await hydrateSession(newSession);
         setIsLoading(false);
       }
     );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
-      setIsLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -143,15 +166,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const completeOnboarding = async (data: Partial<Profile>) => {
-    if (!session?.user) return;
+    if (!session?.user) throw new Error('Usuário não autenticado');
     const updateData = { ...data, is_onboarded: true };
     const { error } = await supabase
       .from('profiles')
       .update(updateData as any)
       .eq('id', session.user.id);
-    if (!error) {
-      setProfile(prev => prev ? { ...prev, ...updateData } : prev);
+    if (error) {
+      throw new Error(error.message);
     }
+    setProfile(prev => prev ? { ...prev, ...updateData } : prev);
   };
 
   const refreshProfile = async () => {

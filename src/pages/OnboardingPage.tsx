@@ -46,11 +46,14 @@ export default function OnboardingPage() {
         services: data.services.split(',').map(s => s.trim()).filter(Boolean),
         objective: data.objective[0] || '',
       });
-      navigate('/app');
-    } catch {
+      toast.success('Dados salvos com sucesso!');
+      navigate('/app', { replace: true });
+    } catch (err) {
+      console.error('Onboarding save error:', err);
       toast.error('Erro ao salvar dados. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
