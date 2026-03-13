@@ -351,15 +351,16 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    className={plan.highlighted ? 'bg-gradient-brand text-primary-foreground w-full' : 'w-full'}
-                    variant={plan.highlighted ? 'default' : 'outline'}
-                    asChild
+                  <a
+                    href={PLAN_FEATURES[plan.key].checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`cyber-btn w-full ${plan.highlighted ? 'cyber-btn-primary' : 'cyber-btn-outline'}`}
                   >
-                    <a href={PLAN_FEATURES[plan.key].checkoutUrl} target="_blank" rel="noopener noreferrer">
+                    <span className="cyber-btn-inner w-full justify-center">
                       {plan.cta}
-                    </a>
-                  </Button>
+                    </span>
+                  </a>
                 </motion.div>
               ))}
             </div>
