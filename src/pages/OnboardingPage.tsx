@@ -392,8 +392,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const totalSteps = QUESTIONS.length;
-  const isDone = currentStep >= totalSteps;
+  const totalSteps = QUESTIONS.length + 1; // +1 for pricing step
+  const isDone = currentStep >= QUESTIONS.length && !pricingStep && !isExtractingServices;
 
   const renderMarkdown = (text: string | undefined) =>
     (text ?? '').split(/(\*\*.*?\*\*)/).map((part, j) =>
