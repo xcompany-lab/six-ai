@@ -38,6 +38,7 @@ export default function HomePage() {
             <a href="#como-funciona" className="hover:text-foreground transition-colors">Como Funciona</a>
             <a href="#beneficios" className="hover:text-foreground transition-colors">Benefícios</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
+            <a href="#integracoes" className="hover:text-foreground transition-colors">Integrações</a>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>Login</Button>
