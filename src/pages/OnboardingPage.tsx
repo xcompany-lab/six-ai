@@ -474,17 +474,29 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isRecording ? "Gravando áudio..." : "Digite sua resposta ou use o microfone..."}
-                rows={3}
-                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
-                disabled={isGenerating || isRecording}
-              />
+              {/* Textarea or Waveform */}
+              {isRecording ? (
+                <div className="relative z-10 flex items-center gap-3 px-2 py-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse shrink-0" />
+                  <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={60}
+                    className="w-full h-[60px] rounded-lg"
+                  />
+                </div>
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isTranscribing ? "Transcrevendo áudio..." : "Digite sua resposta ou use o microfone..."}
+                  rows={3}
+                  className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
+                  disabled={isGenerating || isTranscribing}
+                />
+              )}
 
               {/* Bottom bar: attachment buttons + send */}
               <div className="flex items-center justify-between pt-1 px-1 relative z-10">
