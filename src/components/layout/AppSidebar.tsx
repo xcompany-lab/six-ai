@@ -130,7 +130,21 @@ export default function AppSidebar({ onClose, isMobile }: AppSidebarProps) {
         </div>
       )}
 
-      <div className="border-t border-sidebar-border p-3">
+      <div className="border-t border-sidebar-border p-3 space-y-2">
+        {profile && showLabels && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={profile.avatar || undefined} alt={profile.name} />
+              <AvatarFallback className="bg-gradient-brand text-primary-foreground text-xs font-bold">
+                {profile.name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{profile.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+            </div>
+          </div>
+        )}
         <button onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-colors">
           <LogOut size={18} />
