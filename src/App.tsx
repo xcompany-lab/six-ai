@@ -22,6 +22,8 @@ import KanbanPage from "./pages/KanbanPage";
 import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -62,6 +64,8 @@ function AppRoutes() {
           : <LoginPage />
       } />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/termos" element={<TermsPage />} />
+      <Route path="/privacidade" element={<PrivacyPage />} />
       <Route path="/onboarding" element={
         !isAuthenticated ? <Navigate to="/" replace /> :
         isOnboarded ? <Navigate to="/app" replace /> :
