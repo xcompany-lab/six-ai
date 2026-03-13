@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Save, Upload, Loader2, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Save, Loader2, Camera, ZoomIn, ZoomOut, RotateCw, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import Cropper, { Area } from 'react-easy-crop';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -33,11 +33,56 @@ const Field = ({ label, value, onChange, placeholder, textarea }: FieldProps) =>
   );
 };
 
+async function getCroppedImg(imageSrc: string, crop: Area, rotation: number): Promise<Blob> {
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+    image.src = imageSrc;
+  });
+
+  const canvas = document.createElement('canvas');
+  const outputSize = 512;
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  const ctx = canvas.getContext('2d')!;
+
+  // Handle rotation
+  const radians = (rotation * Math.PI) / 180;
+  const sin = Math.abs(Math.sin(radians));
+  const cos = Math.abs(Math.cos(radians));
+  const rotW = image.width * cos + image.height * sin;
+  const rotH = image.width * sin + image.height * cos;
+
+  const rotCanvas = document.createElement('canvas');
+  rotCanvas.width = rotW;
+  rotCanvas.height = rotH;
+  const rotCtx = rotCanvas.getContext('2d')!;
+  rotCtx.translate(rotW / 2, rotH / 2);
+  rotCtx.rotate(radians);
+  rotCtx.drawImage(image, -image.width / 2, -image.height / 2);
+
+  ctx.drawImage(rotCanvas, crop.x, crop.y, crop.width, crop.height, 0, 0, outputSize, outputSize);
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.92);
+  });
+}
+
 export default function ProfilePage() {
   const { profile, updateProfile, user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
   const [form, setForm] = useState({
     name: '',
     brand_name: '',
@@ -68,28 +113,47 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       toast.error('Selecione um arquivo de imagem.');
       return;
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 10MB.');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageSrc(reader.result as string);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setRotation(0);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCropConfirm = async () => {
+    if (!imageSrc || !croppedAreaPixels || !user) return;
+
     setUploading(true);
+    setCropDialogOpen(false);
     try {
-      const ext = file.name.split('.').pop();
-      const filePath = `${user.id}/avatar.${ext}`;
+      const blob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      const filePath = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, { upsert: true, contentType: 'image/jpeg' });
 
       if (uploadError) throw uploadError;
 
@@ -97,7 +161,6 @@ export default function ProfilePage() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Add cache buster to force refresh
       const avatarUrl = `${publicUrl}?t=${Date.now()}`;
       await updateProfile({ avatar: avatarUrl });
       toast.success('Foto atualizada com sucesso!');
@@ -105,7 +168,7 @@ export default function ProfilePage() {
       toast.error('Erro ao enviar foto: ' + err.message);
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setImageSrc(null);
     }
   };
 
@@ -134,8 +197,68 @@ export default function ProfilePage() {
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleAvatarUpload}
+        onChange={handleFileSelect}
       />
+
+      {/* Crop Dialog */}
+      <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajustar foto</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black">
+            {imageSrc && (
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                onCropComplete={onCropComplete}
+              />
+            )}
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <ZoomOut size={16} className="text-muted-foreground shrink-0" />
+              <Slider
+                value={[zoom]}
+                min={1}
+                max={3}
+                step={0.05}
+                onValueChange={([v]) => setZoom(v)}
+                className="flex-1"
+              />
+              <ZoomIn size={16} className="text-muted-foreground shrink-0" />
+            </div>
+            <div className="flex items-center gap-3">
+              <RotateCw size={16} className="text-muted-foreground shrink-0" />
+              <Slider
+                value={[rotation]}
+                min={0}
+                max={360}
+                step={1}
+                onValueChange={([v]) => setRotation(v)}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-8 text-right">{rotation}°</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <button onClick={() => setCropDialogOpen(false)} className="px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Cancelar
+            </button>
+            <button onClick={handleCropConfirm} className="px-5 py-2 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
+              Salvar foto
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-xl p-6 flex flex-col items-center">
