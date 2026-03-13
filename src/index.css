@@ -173,92 +173,31 @@
 }
 
 /* Cyber Cyan */
-.cyber-cyan {
-  background: linear-gradient(120deg,
-    #000a0a, #001f1f, #003d3d, #007070,
-    #00d4d4, #40ffff, #00d4d4,
-    #007070, #003d3d, #001f1f,
-    #003d3d, #007070, #00d4d4, #40ffff,
-    #00d4d4, #000a0a
-  );
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(0,212,212,0.12), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-cyan { --cyber-glow: #00d4d4; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(0,212,212,0.12), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-cyan .cyber-icon-face svg { stroke: #00d4d4; filter: drop-shadow(0 0 5px rgba(0,212,212,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Green */
-.cyber-green {
-  background: linear-gradient(120deg,
-    #000a00, #001500, #003000, #006000,
-    #00bb00, #40ff40, #00bb00,
-    #006000, #003000, #001500,
-    #003000, #006000, #00bb00, #40ff40,
-    #00bb00, #000a00
-  );
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(0,187,0,0.12), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-green { --cyber-glow: #00cc00; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(0,187,0,0.12), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-green .cyber-icon-face svg { stroke: #00cc00; filter: drop-shadow(0 0 5px rgba(0,200,0,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Gold */
-.cyber-gold {
-  background: linear-gradient(120deg,
-    #1a0d00, #3d2600, #6b4200, #a06800, #c8880a,
-    #a87020, #6b4200, #3d2600, #1a0d00, #3d2600,
-    #6b4200, #a06800, #c8880a, #a87020, #6b4200, #1a0d00
-  );
-  animation: metalSlide 6s linear infinite;
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-gold { --cyber-glow: #c8880a; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-gold .cyber-icon-face svg { stroke: rgba(255,255,255,0.88); filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Yellow */
-.cyber-yellow {
-  background: linear-gradient(120deg,
-    #0a0800, #1f1a00, #3d3300, #706000,
-    #f0c000, #ffe44d, #f0c000,
-    #706000, #3d3300, #1f1a00,
-    #3d3300, #706000, #f0c000, #ffe44d,
-    #f0c000, #0a0800
-  );
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(240,192,0,0.12), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-yellow { --cyber-glow: #f0c000; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(240,192,0,0.12), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-yellow .cyber-icon-face svg { stroke: #f0c000; filter: drop-shadow(0 0 5px rgba(240,192,0,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Magenta */
-.cyber-magenta {
-  background: linear-gradient(120deg,
-    #0a0010, #200030, #450060, #800090,
-    #cc00cc, #ff40ff, #cc00cc,
-    #800090, #450060, #200030,
-    #450060, #800090, #cc00cc, #ff40ff,
-    #cc00cc, #0a0010
-  );
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(204,0,204,0.15), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-magenta { --cyber-glow: #dd00dd; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(204,0,204,0.15), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-magenta .cyber-icon-face svg { stroke: #dd00dd; filter: drop-shadow(0 0 5px rgba(220,0,220,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Red */
-.cyber-red {
-  background: linear-gradient(120deg,
-    #0a0000, #200000, #500000, #900000,
-    #dd0000, #ff4040, #dd0000,
-    #900000, #500000, #200000,
-    #500000, #900000, #dd0000, #ff4040,
-    #dd0000, #0a0000
-  );
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(220,0,0,0.15), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-red { --cyber-glow: #ff3030; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 0 16px rgba(220,0,0,0.15), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-red .cyber-icon-face svg { stroke: #ff3030; filter: drop-shadow(0 0 5px rgba(255,40,40,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Cyber Rose */
-.cyber-rose {
-  background: linear-gradient(120deg,
-    #1a0a08, #3d1810, #6b3028, #955048, #b87060,
-    #955048, #6b3028, #3d1810, #1a0a08, #3d1810,
-    #6b3028, #955048, #b87060, #955048, #6b3028, #1a0a08
-  );
-  animation: metalSlide 6s linear infinite;
-  box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 6px 20px rgba(0,0,0,0.7);
-}
+.cyber-rose { --cyber-glow: #b87060; box-shadow: 0 0 0 2px hsl(220 20% 4%), 0 6px 20px rgba(0,0,0,0.7); }
 .cyber-rose .cyber-icon-face svg { stroke: rgba(255,255,255,0.88); filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Badge gradient text */
