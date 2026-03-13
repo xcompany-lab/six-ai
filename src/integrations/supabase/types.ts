@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_configs: {
+        Row: {
+          agent_type: string
+          created_at: string
+          id: string
+          system_prompt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string
+          id?: string
+          system_prompt?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          id?: string
+          system_prompt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_agent_config: {
         Row: {
           active: boolean
@@ -121,6 +148,7 @@ export type Database = {
           created_at: string
           date: string
           duration_minutes: number
+          google_event_id: string | null
           id: string
           lead_id: string | null
           lead_name: string
@@ -135,6 +163,7 @@ export type Database = {
           created_at?: string
           date: string
           duration_minutes?: number
+          google_event_id?: string | null
           id?: string
           lead_id?: string | null
           lead_name?: string
@@ -149,6 +178,7 @@ export type Database = {
           created_at?: string
           date?: string
           duration_minutes?: number
+          google_event_id?: string | null
           id?: string
           lead_id?: string | null
           lead_name?: string
@@ -168,6 +198,152 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_profiles: {
+        Row: {
+          business_name: string
+          created_at: string
+          faq: Json
+          follow_up_config: Json
+          funnel_stages: Json
+          id: string
+          objections: Json
+          qualified_lead_criteria: string
+          segment: string
+          services: Json
+          tone: string
+          updated_at: string
+          user_id: string
+          working_hours: Json
+        }
+        Insert: {
+          business_name?: string
+          created_at?: string
+          faq?: Json
+          follow_up_config?: Json
+          funnel_stages?: Json
+          id?: string
+          objections?: Json
+          qualified_lead_criteria?: string
+          segment?: string
+          services?: Json
+          tone?: string
+          updated_at?: string
+          user_id: string
+          working_hours?: Json
+        }
+        Update: {
+          business_name?: string
+          created_at?: string
+          faq?: Json
+          follow_up_config?: Json
+          funnel_stages?: Json
+          id?: string
+          objections?: Json
+          qualified_lead_criteria?: string
+          segment?: string
+          services?: Json
+          tone?: string
+          updated_at?: string
+          user_id?: string
+          working_hours?: Json
+        }
+        Relationships: []
+      }
+      campaign_messages: {
+        Row: {
+          campaign_id: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message_text: string
+          send_at: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_name?: string
+          contact_phone: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_text: string
+          send_at: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_text?: string
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          failed_count: number
+          id: string
+          message_text: string | null
+          name: string
+          scheduled_at: string | null
+          segment: string
+          sent_count: number
+          status: string
+          total_contacts: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          message_text?: string | null
+          name?: string
+          scheduled_at?: string | null
+          segment?: string
+          sent_count?: number
+          status?: string
+          total_contacts?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          message_text?: string | null
+          name?: string
+          scheduled_at?: string | null
+          segment?: string
+          sent_count?: number
+          status?: string
+          total_contacts?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       contact_memory: {
         Row: {
@@ -266,6 +442,7 @@ export type Database = {
         Row: {
           ai_status: string
           created_at: string
+          current_agent: string
           id: string
           interest: string
           last_contact: string
@@ -282,6 +459,7 @@ export type Database = {
         Insert: {
           ai_status?: string
           created_at?: string
+          current_agent?: string
           id?: string
           interest?: string
           last_contact?: string
@@ -298,6 +476,7 @@ export type Database = {
         Update: {
           ai_status?: string
           created_at?: string
+          current_agent?: string
           id?: string
           interest?: string
           last_contact?: string
@@ -421,6 +600,59 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_reminders: {
+        Row: {
+          appointment_at: string | null
+          appointment_id: string | null
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          id: string
+          message_text: string
+          send_at: string
+          sent_at: string | null
+          service_name: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          appointment_at?: string | null
+          appointment_id?: string | null
+          contact_name?: string
+          contact_phone: string
+          created_at?: string
+          id?: string
+          message_text?: string
+          send_at: string
+          sent_at?: string | null
+          service_name?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          appointment_at?: string | null
+          appointment_id?: string | null
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          message_text?: string
+          send_at?: string
+          sent_at?: string | null
+          service_name?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reminders_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduling_config: {
         Row: {
           blocked_dates: string[]
@@ -520,6 +752,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          google_access_token: string | null
+          google_calendar_connected: boolean
+          google_refresh_token: string | null
+          id: string
+          reminder_1_message: string | null
+          reminder_1_offset: string | null
+          reminder_2_message: string | null
+          reminder_2_offset: string | null
+          reminder_3_message: string | null
+          reminder_3_offset: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          google_access_token?: string | null
+          google_calendar_connected?: boolean
+          google_refresh_token?: string | null
+          id?: string
+          reminder_1_message?: string | null
+          reminder_1_offset?: string | null
+          reminder_2_message?: string | null
+          reminder_2_offset?: string | null
+          reminder_3_message?: string | null
+          reminder_3_offset?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          google_access_token?: string | null
+          google_calendar_connected?: boolean
+          google_refresh_token?: string | null
+          id?: string
+          reminder_1_message?: string | null
+          reminder_1_offset?: string | null
+          reminder_2_message?: string | null
+          reminder_2_offset?: string | null
+          reminder_3_message?: string | null
+          reminder_3_offset?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_instances: {
         Row: {
           created_at: string
@@ -567,6 +847,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_campaign_counter: {
+        Args: { p_campaign_id: string; p_field: string }
+        Returns: undefined
       }
     }
     Enums: {

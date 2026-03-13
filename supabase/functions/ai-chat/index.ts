@@ -28,49 +28,74 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { messages, contactPhone } = await req.json();
+    const { messages, contactPhone, agentType } = await req.json();
 
-    // Load agent config
-    const { data: agentConfig } = await supabase
-      .from("ai_agent_config")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // === Try new multi-agent system first ===
+    let systemPrompt: string | null = null;
+
+    if (agentType) {
+      const { data: agentConfig } = await supabase
+        .from("agent_configs")
+        .select("system_prompt")
+        .eq("user_id", userId)
+        .eq("agent_type", agentType)
+        .maybeSingle();
+      if (agentConfig) systemPrompt = agentConfig.system_prompt;
+    }
+
+    // Try default attendant agent
+    if (!systemPrompt) {
+      const { data: agentConfig } = await supabase
+        .from("agent_configs")
+        .select("system_prompt")
+        .eq("user_id", userId)
+        .eq("agent_type", "attendant")
+        .maybeSingle();
+      if (agentConfig) systemPrompt = agentConfig.system_prompt;
+    }
+
+    // === Fallback to legacy ai_agent_config ===
+    if (!systemPrompt) {
+      const { data: agentConfig } = await supabase
+        .from("ai_agent_config")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("brand_name, niche, services, business_description, business_hours, voice_tone")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const basePrompt = agentConfig?.prompt || "Você é um assistente inteligente de atendimento.";
+      const voiceTone = agentConfig?.voice_tone || profile?.voice_tone || "Profissional e empático";
+      const prohibited = agentConfig?.prohibited_words ? `\nPalavras proibidas (NUNCA use): ${agentConfig.prohibited_words}` : "";
+      const faq = agentConfig?.faq ? `\n\nFAQ:\n${agentConfig.faq}` : "";
+      const knowledge = agentConfig?.knowledge_base ? `\n\nBase de Conhecimento:\n${agentConfig.knowledge_base}` : "";
+      const pitch = agentConfig?.pitch ? `\n\nPitch:\n${agentConfig.pitch}` : "";
+      const objections = agentConfig?.objections ? `\n\nTratamento de Objeções:\n${agentConfig.objections}` : "";
+      const outOfScope = agentConfig?.out_of_scope ? `\n\nQuando não souber responder: ${agentConfig.out_of_scope}` : "";
+      const businessContext = profile ? `\nEmpresa: ${profile.brand_name || "N/A"}\nNicho: ${profile.niche || "N/A"}\nServiços: ${(profile.services || []).join(", ")}\nDescrição: ${profile.business_description || "N/A"}\nHorário: ${profile.business_hours || "N/A"}` : "";
+
+      systemPrompt = `${basePrompt}\n\nTom de voz: ${voiceTone}\nEnergia: ${agentConfig?.energy || "Moderada"}${prohibited}${businessContext}${faq}${knowledge}${pitch}${objections}${outOfScope}`;
+    }
 
     // Load contact memory if available
-    let contactMemory = null;
     if (contactPhone) {
-      const { data } = await supabase
+      const { data: contactMemory } = await supabase
         .from("contact_memory")
         .select("*")
         .eq("user_id", userId)
         .eq("contact_phone", contactPhone)
         .maybeSingle();
-      contactMemory = data;
+
+      if (contactMemory) {
+        systemPrompt += `\n\nMemória do contato ${contactMemory.contact_name || contactPhone}:\nResumo: ${contactMemory.summary}\nPreferências: ${contactMemory.preferences}\nÚltimos tópicos: ${contactMemory.last_topics}\nSentimento: ${contactMemory.sentiment}\nInterações: ${contactMemory.interaction_count}`;
+      }
     }
 
-    // Load profile for business context
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("brand_name, niche, services, business_description, business_hours, voice_tone")
-      .eq("id", userId)
-      .maybeSingle();
-
-    // Build system prompt
-    const basePrompt = agentConfig?.prompt || "Você é um assistente inteligente de atendimento.";
-    const voiceTone = agentConfig?.voice_tone || profile?.voice_tone || "Profissional e empático";
-    const prohibited = agentConfig?.prohibited_words ? `\nPalavras proibidas (NUNCA use): ${agentConfig.prohibited_words}` : "";
-    const faq = agentConfig?.faq ? `\n\nFAQ:\n${agentConfig.faq}` : "";
-    const knowledge = agentConfig?.knowledge_base ? `\n\nBase de Conhecimento:\n${agentConfig.knowledge_base}` : "";
-    const pitch = agentConfig?.pitch ? `\n\nPitch:\n${agentConfig.pitch}` : "";
-    const objections = agentConfig?.objections ? `\n\nTratamento de Objeções:\n${agentConfig.objections}` : "";
-    const outOfScope = agentConfig?.out_of_scope ? `\n\nQuando não souber responder: ${agentConfig.out_of_scope}` : "";
-
-    const businessContext = profile ? `\nEmpresa: ${profile.brand_name || "N/A"}\nNicho: ${profile.niche || "N/A"}\nServiços: ${(profile.services || []).join(", ")}\nDescrição: ${profile.business_description || "N/A"}\nHorário: ${profile.business_hours || "N/A"}` : "";
-
-    const memoryContext = contactMemory ? `\n\nMemória do contato ${contactMemory.contact_name || contactPhone}:\nResumo: ${contactMemory.summary}\nPreferências: ${contactMemory.preferences}\nÚltimos tópicos: ${contactMemory.last_topics}\nSentimento: ${contactMemory.sentiment}\nInterações: ${contactMemory.interaction_count}` : "";
-
-    const systemPrompt = `${basePrompt}\n\nTom de voz: ${voiceTone}\nEnergia: ${agentConfig?.energy || "Moderada"}${prohibited}${businessContext}${memoryContext}${faq}${knowledge}${pitch}${objections}${outOfScope}\n\nIMPORTANTE: Na v1, você NÃO consegue interpretar imagens, áudios ou arquivos. Se receber mídia, informe educadamente a limitação.`;
+    systemPrompt += `\n\nIMPORTANTE: Na interface web, responda de forma concisa e natural.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
