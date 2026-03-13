@@ -169,3 +169,27 @@ export function useUpsertSchedulingConfig() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduling_config'] }),
   });
 }
+
+export function useSyncGoogleCalendar() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+
+  const syncMutation = useMutation({
+    mutationFn: async (params?: { time_min?: string; time_max?: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('sync-google-calendar', {
+        body: params || {},
+      });
+
+      if (error) throw error;
+      return data as { status: string; synced: number; updated: number; total_events: number };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['appointments'] });
+    },
+  });
+
+  return syncMutation;
+}
