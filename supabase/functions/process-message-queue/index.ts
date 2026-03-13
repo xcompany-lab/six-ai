@@ -70,12 +70,33 @@ async function setTypingIndicator(phone: string, instanceName: string, composing
 
 async function sendSplitMessages(phone: string, messages: string[], instanceName: string) {
   for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+
+    // Simulate reading the previous message before replying (first message: reading user's msg)
+    if (i === 0) {
+      await sleep(Math.floor(Math.random() * 800) + 500); // 500-1300ms to "read"
+    }
+
+    // Start typing indicator
     await setTypingIndicator(phone, instanceName, true);
-    const typingTime = Math.min(3000, Math.max(600, messages[i].length * 45));
+
+    // Realistic typing speed: ~4 chars/sec for a human on mobile
+    // Add variance: ±30% randomness
+    const baseCharsPerSec = 4;
+    const baseTime = (msg.length / baseCharsPerSec) * 1000;
+    const variance = baseTime * (0.7 + Math.random() * 0.6); // 70%-130% of base
+    const typingTime = Math.min(12000, Math.max(1200, variance)); // 1.2s min, 12s max
+
     await sleep(typingTime);
-    await sendWhatsAppMessage(phone, messages[i], instanceName);
+
+    // Send the message
+    await sendWhatsAppMessage(phone, msg, instanceName);
+
+    // Pause between messages: simulate thinking/reading before next message
     if (i < messages.length - 1) {
-      await sleep(Math.floor(Math.random() * 500) + 400);
+      await setTypingIndicator(phone, instanceName, false);
+      const thinkingPause = Math.floor(Math.random() * 1200) + 800; // 800-2000ms
+      await sleep(thinkingPause);
     }
   }
   await setTypingIndicator(phone, instanceName, false);
