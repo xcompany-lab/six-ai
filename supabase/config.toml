@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.evolution-api]
 verify_jwt = false
+
+[functions.generate-agent-configs]
+verify_jwt = false
+
+[functions.google-calendar-callback]
+verify_jwt = false
+
+[functions.create-calendar-event]
+verify_jwt = false
