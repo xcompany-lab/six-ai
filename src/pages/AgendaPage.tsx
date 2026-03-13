@@ -128,6 +128,8 @@ export default function AgendaPage() {
       ) : (
         <MonthView appointments={appointments || []} currentDate={currentDate} onSelectDay={(d) => { setCurrentDate(d); setView('day'); }} />
       )}
+
+      <SchedulingSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }
