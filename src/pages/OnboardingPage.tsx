@@ -310,7 +310,7 @@ export default function OnboardingPage() {
               />
 
               {/* Attachment pills */}
-              {attachments.length > 0 && (
+              {(attachments.length > 0 || showLinkInput) && (
                 <div className="flex flex-wrap gap-1.5 mb-2 px-1 relative z-10">
                   {attachments.map((att, i) => (
                     <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs">
@@ -323,6 +323,24 @@ export default function OnboardingPage() {
                       </button>
                     </span>
                   ))}
+                  {showLinkInput && (
+                    <div className="flex items-center gap-1 w-full">
+                      <input
+                        type="url"
+                        value={linkInputValue}
+                        onChange={e => setLinkInputValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') { e.preventDefault(); confirmLink(); }
+                          if (e.key === 'Escape') { setLinkInputValue(''); setShowLinkInput(false); }
+                        }}
+                        placeholder="Cole o link (Instagram, site, etc)"
+                        autoFocus
+                        className="flex-1 bg-muted rounded-lg px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <button onClick={confirmLink} className="p-1.5 rounded-md text-accent hover:bg-muted/50"><Check size={14} /></button>
+                      <button onClick={() => { setLinkInputValue(''); setShowLinkInput(false); }} className="p-1.5 rounded-md text-muted-foreground hover:bg-muted/50"><X size={14} /></button>
+                    </div>
+                  )}
                 </div>
               )}
 
