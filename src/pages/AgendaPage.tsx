@@ -25,6 +25,7 @@ const statusLabels: Record<string, string> = {
 export default function AgendaPage() {
   const [view, setView] = useState<ViewType>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { toast } = useToast();
   const syncGoogle = useSyncGoogleCalendar();
 
