@@ -12,6 +12,21 @@ export interface RemindersConfig {
   active: boolean;
 }
 
+export interface ScheduledReminder {
+  id: string;
+  user_id: string;
+  appointment_id: string | null;
+  contact_name: string;
+  contact_phone: string;
+  service_name: string;
+  appointment_at: string | null;
+  send_at: string;
+  sent_at: string | null;
+  message_text: string;
+  status: string;
+  created_at: string;
+}
+
 export function useRemindersConfig() {
   const { user } = useAuth();
   return useQuery({
@@ -22,6 +37,25 @@ export function useRemindersConfig() {
       return data as unknown as RemindersConfig | null;
     },
     enabled: !!user,
+  });
+}
+
+export function useScheduledReminders() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['scheduled_reminders', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('scheduled_reminders')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('send_at', { ascending: true })
+        .limit(50);
+      if (error) throw error;
+      return (data || []) as unknown as ScheduledReminder[];
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
   });
 }
 

@@ -1,23 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { PlanGate } from '@/components/ui/plan-gate';
-import { useRemindersConfig, useUpsertRemindersConfig } from '@/hooks/use-reminders';
-import { useAppointments } from '@/hooks/use-appointments';
-import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save } from 'lucide-react';
+import { useRemindersConfig, useUpsertRemindersConfig, useScheduledReminders } from '@/hooks/use-reminders';
+import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+const statusMap: Record<string, { label: string; className: string; icon: typeof CheckCircle2 }> = {
+  pending: { label: 'Agendado', className: 'bg-secondary text-muted-foreground', icon: Clock },
+  sent: { label: 'Enviado', className: 'bg-accent/10 text-accent', icon: CheckCircle2 },
+  failed: { label: 'Falhou', className: 'bg-destructive/10 text-destructive', icon: AlertCircle },
+};
 
 export default function RemindersPage() {
   const { data: config, isLoading: configLoading } = useRemindersConfig();
   const upsertConfig = useUpsertRemindersConfig();
-  const { data: appointments, isLoading: apptsLoading } = useAppointments();
+  const { data: reminders, isLoading: remindersLoading } = useScheduledReminders();
   const [showConfig, setShowConfig] = useState(false);
 
-  // Show upcoming appointments as "reminders"
-  const upcomingAppts = (appointments || [])
-    .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
-    .slice(0, 10);
+  const sentCount = (reminders || []).filter(r => r.status === 'sent').length;
+  const pendingCount = (reminders || []).filter(r => r.status === 'pending').length;
 
   return (
     <PlanGate requiredPlan="plus">
@@ -27,14 +30,15 @@ export default function RemindersPage() {
         </button>
       </PageHeader>
 
-      {/* Config cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Lembrete 1', value: config?.first_reminder || '24h antes', icon: Clock },
           { label: 'Lembrete 2', value: config?.second_reminder || '2h antes', icon: Bell },
+          { label: 'Enviados', value: String(sentCount), icon: Send },
           { label: 'Status', value: config?.active !== false ? 'Ativo' : 'Inativo', icon: MessageSquare },
         ].map((c, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
             className="glass rounded-xl p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10"><c.icon size={18} className="text-primary" /></div>
             <div>
@@ -46,38 +50,51 @@ export default function RemindersPage() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-xl overflow-hidden">
-        {apptsLoading ? (
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Lembretes Agendados</h3>
+          <span className="text-xs text-muted-foreground">{pendingCount} pendente(s)</span>
+        </div>
+        {remindersLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-        ) : !upcomingAppts.length ? (
-          <p className="text-center text-muted-foreground py-12 text-sm">Nenhum agendamento próximo para enviar lembretes.</p>
+        ) : !(reminders || []).length ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">Nenhum lembrete agendado. Crie agendamentos para gerar lembretes automaticamente.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Paciente</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Contato</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Serviço</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Data</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Lembrete 1</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Lembrete 2</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Agendamento</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Envio em</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {upcomingAppts.map((a) => (
-                  <tr key={a.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{a.lead_name}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{a.service}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{format(new Date(a.date + 'T00:00'), 'dd/MM')} {a.time?.slice(0, 5)}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{config?.first_reminder || '24h'} antes</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{config?.second_reminder || '2h'} antes</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${a.status === 'confirmed' ? 'bg-accent/10 text-accent' : 'bg-secondary text-muted-foreground'}`}>
-                        {a.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {(reminders || []).map((r) => {
+                  const st = statusMap[r.status] || statusMap.pending;
+                  const StIcon = st.icon;
+                  return (
+                    <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-foreground">{r.contact_name}</p>
+                        <p className="text-xs text-muted-foreground">{r.contact_phone}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{r.service_name || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {r.appointment_at ? format(new Date(r.appointment_at), 'dd/MM HH:mm') : '—'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {format(new Date(r.send_at), 'dd/MM HH:mm')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${st.className}`}>
+                          <StIcon size={12} /> {st.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -132,6 +149,7 @@ function ReminderConfigModal({ config, onClose, onSave }: { config: any; onClose
             <textarea value={form.message_template} onChange={e => setForm(f => ({ ...f, message_template: e.target.value }))}
               className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[100px] resize-none"
               placeholder="Olá {nome}, gostaríamos de confirmar seu agendamento para {data} às {hora}..." />
+            <p className="text-xs text-muted-foreground mt-1">Variáveis: {'{nome}'}, {'{servico}'}, {'{data}'}, {'{hora}'}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-foreground mb-1.5 block">Resposta esperada</label>
