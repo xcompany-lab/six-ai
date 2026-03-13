@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   LayoutDashboard, User, CreditCard, Bot, CalendarCheck, RotateCcw,
   Zap, Bell, Calendar, MessageSquare, Columns3, Brain, Settings, HelpCircle,
