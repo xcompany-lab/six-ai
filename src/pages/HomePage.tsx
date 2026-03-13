@@ -196,8 +196,8 @@ export default function HomePage() {
                 { icon: Clock, title: 'Economia de tempo', desc: 'Automatize tarefas repetitivas e foque no que realmente importa.' },
               ].map(({ icon: Icon, title, desc }, i) => (
                 <motion.div key={title} variants={fadeUp} custom={i} className="p-6 rounded-2xl glass hover:border-primary/30 transition-colors group">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="h-6 w-6 text-primary" />
+                  <div className="mb-4">
+                    <CyberIcon icon={Icon} variant="cyan" size="md" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{title}</h3>
                   <p className="text-sm text-muted-foreground">{desc}</p>
