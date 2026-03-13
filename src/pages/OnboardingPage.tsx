@@ -321,8 +321,8 @@ export default function OnboardingPage() {
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Digite sua resposta..."
-                rows={2}
-                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-40 relative z-10"
+                rows={3}
+                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
                 disabled={isGenerating}
               />
 
