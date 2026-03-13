@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { PlanType } from '@/types';
@@ -52,8 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initializedRef = useRef(false);
-
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -66,28 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data as unknown as Profile | null;
   };
 
-  const hydrateSession = async (newSession: Session | null) => {
-    setSession(newSession);
-    if (newSession?.user) {
-      await fetchProfile(newSession.user.id);
-    } else {
-      setProfile(null);
-    }
-  };
-
   useEffect(() => {
-    // 1. Initial session check
-    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
-      if (!initializedRef.current) {
-        initializedRef.current = true;
-        await hydrateSession(initialSession);
-        setIsLoading(false);
-      }
-    });
+    let mounted = true;
 
-    // 2. Auth state changes (fires after sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
+        if (!mounted) return;
+
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setProfile(null);
@@ -100,16 +83,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // SIGNED_IN, INITIAL_SESSION, PASSWORD_RECOVERY, USER_UPDATED
-        if (!initializedRef.current) {
-          initializedRef.current = true;
+        setSession(newSession);
+        if (newSession?.user) {
+          fetchProfile(newSession.user.id).finally(() => {
+            if (mounted) setIsLoading(false);
+          });
+        } else {
+          setProfile(null);
+          setIsLoading(false);
         }
-        await hydrateSession(newSession);
-        setIsLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    const timeout = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 5000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
