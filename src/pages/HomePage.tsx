@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
             <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-4 mb-8">
-              <img src={sixLogo} alt="SIX AI" className="h-12 sm:h-14" />
+              <img src={sixLogo} alt="SIX AI" className="h-24 sm:h-28 lg:h-32" />
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="badge-gradient-brand">Smart Interaction eXperience</span>
