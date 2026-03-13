@@ -72,6 +72,7 @@ const sections: LegalSection[] = [
           <li><strong className="text-foreground">Análises e Insights:</strong> gerar relatórios de performance, métricas de conversão e análise de sentimento.</li>
           <li><strong className="text-foreground">Comunicação:</strong> enviar notificações sobre a conta, atualizações da Plataforma e suporte técnico.</li>
           <li><strong className="text-foreground">Melhoria contínua:</strong> aprimorar as funcionalidades e a experiência do Usuário.</li>
+          <li><strong className="text-foreground">Integração Google Agenda:</strong> utilizar os tokens OAuth exclusivamente para criar, atualizar e sincronizar eventos de agendamento na Google Agenda do Usuário. Nenhum dado do Google é utilizado para fins de marketing, publicidade ou compartilhado com terceiros.</li>
         </ul>
       </>
     ),
