@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSaveBusinessProfile } from '@/hooks/use-business-profile';
+import { useBusinessProfile, useSaveBusinessProfile } from '@/hooks/use-business-profile';
 import { ArrowRight, ArrowLeft, Check, Loader2, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogo from '@/assets/six-logo-dark.png';
@@ -44,8 +44,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { completeOnboarding } = useAuth();
+  const { completeOnboarding, profile: authProfile } = useAuth();
   const saveBusinessProfile = useSaveBusinessProfile();
+  const { data: existingBP } = useBusinessProfile();
 
   const [data, setData] = useState({
     name: '',
@@ -63,6 +64,28 @@ export default function OnboardingPage() {
     work_end: '18:00',
     objective: [] as string[],
   });
+
+  // Pre-populate with existing data when reconfiguring
+  useEffect(() => {
+    if (existingBP || authProfile) {
+      setData(d => ({
+        ...d,
+        name: authProfile?.name || d.name,
+        brand_name: existingBP?.business_name || authProfile?.brand_name || d.brand_name,
+        whatsapp: authProfile?.whatsapp || d.whatsapp,
+        niche: existingBP?.segment || authProfile?.niche || d.niche,
+        services: existingBP?.services ? (existingBP.services as string[]).join(', ') : (authProfile?.services?.join(', ') || d.services),
+        tone: existingBP?.tone || d.tone,
+        faq: existingBP?.faq?.length ? existingBP.faq as { q: string; a: string }[] : d.faq,
+        objections: existingBP?.objections?.length ? existingBP.objections as { objection: string; response: string }[] : d.objections,
+        funnel_stages: existingBP?.funnel_stages?.length ? existingBP.funnel_stages as string[] : d.funnel_stages,
+        qualified_lead_criteria: existingBP?.qualified_lead_criteria || d.qualified_lead_criteria,
+        working_days: (existingBP?.working_hours as any)?.days || d.working_days,
+        work_start: (existingBP?.working_hours as any)?.start || d.work_start,
+        work_end: (existingBP?.working_hours as any)?.end || d.work_end,
+      }));
+    }
+  }, [existingBP, authProfile]);
 
   const updateField = <K extends keyof typeof data>(key: K, value: (typeof data)[K]) => {
     setData(d => ({ ...d, [key]: value }));
