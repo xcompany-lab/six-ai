@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { useAppointmentsByDateRange, Appointment } from '@/hooks/use-appointments';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useAppointmentsByDateRange, Appointment, useSyncGoogleCalendar } from '@/hooks/use-appointments';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 type ViewType = 'day' | 'week' | 'month';
 const viewLabels: Record<ViewType, string> = { day: 'Dia', week: 'Semana', month: 'Mês' };
@@ -23,6 +24,8 @@ const statusLabels: Record<string, string> = {
 export default function AgendaPage() {
   const [view, setView] = useState<ViewType>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { toast } = useToast();
+  const syncGoogle = useSyncGoogleCalendar();
 
   const { startDate, endDate } = useMemo(() => {
     if (view === 'day') return { startDate: format(currentDate, 'yyyy-MM-dd'), endDate: format(currentDate, 'yyyy-MM-dd') };
@@ -31,6 +34,27 @@ export default function AgendaPage() {
   }, [view, currentDate]);
 
   const { data: appointments, isLoading } = useAppointmentsByDateRange(startDate, endDate);
+
+  // Auto-sync on mount and every 5 minutes
+  useEffect(() => {
+    syncGoogle.mutate({});
+    const interval = setInterval(() => syncGoogle.mutate({}), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleManualSync = () => {
+    syncGoogle.mutate({}, {
+      onSuccess: (data) => {
+        toast({
+          title: 'Sincronizado',
+          description: `${data.synced} novos, ${data.updated} atualizados de ${data.total_events} eventos.`,
+        });
+      },
+      onError: () => {
+        toast({ title: 'Erro ao sincronizar', description: 'Verifique a conexão com o Google Calendar.', variant: 'destructive' });
+      },
+    });
+  };
 
   const navigate = (dir: number) => {
     if (view === 'day') setCurrentDate(d => dir > 0 ? addDays(d, 1) : subDays(d, 1));
