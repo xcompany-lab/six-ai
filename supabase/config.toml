@@ -47,4 +47,3 @@ verify_jwt = false
 
 [functions.transcribe-onboarding-audio]
 verify_jwt = false
-verify_jwt = false
