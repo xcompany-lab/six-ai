@@ -6,6 +6,7 @@ import {
   Shield, Star, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-nobg.png';
 
