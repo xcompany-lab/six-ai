@@ -34,6 +34,12 @@ const QUESTIONS: { label: string; headline: string; subtitle?: string }[] = [
   },
 ];
 
+const LOADING_STAGES = [
+  'Analisando suas respostas...',
+  'Construindo perfil do negócio...',
+  'Gerando seus 4 agentes de IA...',
+];
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
@@ -47,6 +53,7 @@ export default function OnboardingPage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -249,6 +256,11 @@ export default function OnboardingPage() {
     } else {
       setCurrentStep(nextStep);
       setIsGenerating(true);
+      setLoadingStage(0);
+
+      // Animate loading stages
+      const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
+      const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
 
       try {
         const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
@@ -265,10 +277,15 @@ export default function OnboardingPage() {
         });
 
         if (error) throw error;
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
         await refreshProfile();
-        setTimeout(() => navigate('/app', { replace: true }), 2000);
+        toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
+        setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
       } catch (err) {
         console.error('Generation error:', err);
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
         setIsGenerating(false);
         toast.error('Erro ao gerar agentes. Tente novamente.');
         setCurrentStep(QUESTIONS.length - 1);
@@ -393,14 +410,42 @@ export default function OnboardingPage() {
               key="generating"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center flex flex-col items-center gap-4"
+              className="text-center flex flex-col items-center gap-6"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-brand flex items-center justify-center">
                 <Loader2 size={28} className="animate-spin text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Criando seus agentes...</h2>
-                <p className="text-muted-foreground">Analisando suas respostas e personalizando tudo para seu negócio</p>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">Criando seus agentes...</h2>
+                <div className="flex flex-col gap-2">
+                  {LOADING_STAGES.map((stage, i) => (
+                    <motion.p
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: loadingStage >= i ? 1 : 0.3, x: 0 }}
+                      transition={{ duration: 0.4, delay: i === loadingStage ? 0.1 : 0 }}
+                      className={`text-sm flex items-center gap-2 justify-center ${loadingStage >= i ? 'text-foreground' : 'text-muted-foreground/40'}`}
+                    >
+                      {loadingStage > i ? (
+                        <Check size={14} className="text-accent" />
+                      ) : loadingStage === i ? (
+                        <Loader2 size={14} className="animate-spin text-primary" />
+                      ) : (
+                        <span className="w-3.5" />
+                      )}
+                      {stage}
+                    </motion.p>
+                  ))}
+                </div>
+              </div>
+              {/* Indeterminate progress bar */}
+              <div className="w-48 h-1 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-brand"
+                  initial={{ x: '-100%', width: '40%' }}
+                  animate={{ x: '250%' }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                />
               </div>
             </motion.div>
           )}
