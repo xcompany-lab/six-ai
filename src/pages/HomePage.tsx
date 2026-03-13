@@ -163,8 +163,8 @@ export default function HomePage() {
                 { step: '03', title: 'Deixe a IA trabalhar', desc: 'Ela responde leads, agenda horários e faz follow-ups automaticamente.', icon: Zap },
               ].map(({ step, title, desc, icon: Icon }, i) => (
                 <motion.div key={step} variants={fadeUp} custom={i} className="relative text-center">
-                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-brand mb-6">
-                    <Icon className="h-7 w-7 text-primary-foreground" />
+                  <div className="inline-block mb-6">
+                    <CyberIcon icon={Icon} variant="cyan" size="lg" />
                   </div>
                   <div className="absolute -top-2 -right-2 md:right-auto md:-left-2 text-xs font-mono font-bold text-primary bg-primary/10 rounded-full h-8 w-8 flex items-center justify-center">
                     {step}
