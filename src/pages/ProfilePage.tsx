@@ -86,14 +86,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     name: '',
     brand_name: '',
-    niche: '',
     whatsapp: '',
-    voice_tone: 'Profissional e acolhedor',
-    services: '',
-    address: '',
-    business_hours: '08:00 - 18:00',
-    business_description: '',
-    objective: '',
   });
 
   useEffect(() => {
