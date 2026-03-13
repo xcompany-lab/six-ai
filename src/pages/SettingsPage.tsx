@@ -80,16 +80,26 @@ export default function SettingsPage() {
     }
   }, [searchParams, setSearchParams]);
 
-  const connectGoogleCalendar = () => {
+  const connectGoogleCalendar = async () => {
     if (!user) return;
     setGoogleLoading(true);
 
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = `https://tzcstwlnflhiqzkmouqd.supabase.co/functions/v1/google-calendar-callback`;
-    const scope = encodeURIComponent('openid email profile https://www.googleapis.com/auth/calendar.events');
-    const state = user.id;
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { user_id: user.id },
+      });
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
+      if (error || !data?.auth_url) {
+        toast.error('Erro ao iniciar conexão com Google. Verifique se as credenciais estão configuradas.');
+        setGoogleLoading(false);
+        return;
+      }
+
+      window.location.href = data.auth_url;
+    } catch (e) {
+      toast.error('Erro ao conectar com Google.');
+      setGoogleLoading(false);
+    }
 
     window.location.href = authUrl;
   };
