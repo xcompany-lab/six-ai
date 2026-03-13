@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square } from 'lucide-react';
+import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogoHero from '@/assets/six-logo-hero.png';
 
@@ -14,6 +14,15 @@ interface Attachment {
   url?: string;
   storagePath?: string;
 }
+
+interface ServicePrice {
+  name: string;
+  price: string;
+  notes: string;
+}
+
+const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
+
 
 // Hardcoded orchestrator questions
 const QUESTIONS: { label: string; headline: string; subtitle?: string }[] = [
