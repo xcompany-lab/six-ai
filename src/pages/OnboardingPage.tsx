@@ -52,6 +52,9 @@ export default function OnboardingPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const userResponses = useRef<string[]>([]);
   const allAttachments = useRef<Attachment[]>([]);
 
