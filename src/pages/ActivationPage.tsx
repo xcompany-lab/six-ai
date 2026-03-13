@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { PlanGate } from '@/components/ui/plan-gate';
-import { useActivationCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign, ActivationCampaign } from '@/hooks/use-activation';
+import { useActivationCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign, useCampaignMessages } from '@/hooks/use-activation';
 import { useLeads } from '@/hooks/use-leads';
-import { Zap, Filter, Send, Users, Clock, UserX, Gift, Plus, X, Loader2, Trash2, Play, Pause } from 'lucide-react';
+import { Zap, Filter, Send, Users, Clock, UserX, Gift, Plus, X, Loader2, Trash2, Play, Pause, Sparkles, Rocket, CheckCircle2, AlertCircle, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 const filterTypes = [
   { key: 'old_leads', label: 'Leads antigos', icon: Clock },
@@ -25,8 +26,8 @@ export default function ActivationPage() {
   const { data: leads, isLoading: leadsLoading } = useLeads();
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
 
-  // Compute filter counts from real leads
   const filterCounts = useMemo(() => {
     if (!leads) return {};
     const now = new Date();
@@ -39,7 +40,6 @@ export default function ActivationPage() {
     };
   }, [leads]);
 
-  // Filter leads for display
   const filteredLeads = useMemo(() => {
     if (!leads || !selectedFilter) return leads || [];
     const now = new Date();
@@ -57,6 +57,19 @@ export default function ActivationPage() {
     if (confirm('Excluir campanha?')) deleteCampaign.mutate(id, { onSuccess: () => toast.success('Campanha excluída') });
   };
 
+  const handleLaunchCampaign = async (campaignId: string) => {
+    toast.info('Iniciando envio da campanha...');
+    try {
+      const { data, error } = await supabase.functions.invoke('send-activation', {
+        body: { campaign_id: campaignId },
+      });
+      if (error) throw error;
+      toast.success(`Campanha finalizada! ${data?.sent || 0} mensagens enviadas.`);
+    } catch (err: any) {
+      toast.error('Erro ao enviar campanha: ' + (err.message || 'Erro desconhecido'));
+    }
+  };
+
   return (
     <PlanGate requiredPlan="pro">
       <PageHeader title="Ativação de Base com IA" subtitle="Reative contatos antigos com campanhas inteligentes">
@@ -67,34 +80,22 @@ export default function ActivationPage() {
 
       {/* Campaigns */}
       {campaigns && campaigns.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {campaigns.map((c, i) => (
-            <motion.div key={c.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              className={`glass rounded-xl p-4 ${c.status === 'active' ? 'border-primary/30' : ''}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-semibold text-foreground text-sm">{c.name}</h4>
-                  <p className="text-xs text-muted-foreground">{filterTypes.find(f => f.key === c.filter_type)?.label || c.filter_type}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => updateCampaign.mutate({ id: c.id, status: c.status === 'active' ? 'paused' : 'active' })}
-                    className="p-1.5 rounded-lg hover:bg-secondary">
-                    {c.status === 'active' ? <Pause size={14} className="text-accent" /> : <Play size={14} className="text-muted-foreground" />}
-                  </button>
-                  <button onClick={() => handleDeleteCampaign(c.id)} className="p-1.5 rounded-lg hover:bg-destructive/10">
-                    <Trash2 size={14} className="text-destructive" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                <span>{c.contacts_count} contatos</span>
-                <span>{c.responses_count} respostas</span>
-                <span className={`px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-accent/10 text-accent' : c.status === 'draft' ? 'bg-secondary text-muted-foreground' : 'bg-warning/10 text-warning'}`}>
-                  {c.status === 'active' ? 'Ativa' : c.status === 'draft' ? 'Rascunho' : 'Pausada'}
-                </span>
-              </div>
-            </motion.div>
-          ))}
+        <div className="space-y-4 mb-8">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Campanhas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {campaigns.map((c, i) => (
+              <CampaignCard
+                key={c.id}
+                campaign={c}
+                index={i}
+                expanded={expandedCampaign === c.id}
+                onExpand={() => setExpandedCampaign(expandedCampaign === c.id ? null : c.id)}
+                onToggle={() => updateCampaign.mutate({ id: c.id, status: c.status === 'active' ? 'paused' : 'active' })}
+                onDelete={() => handleDeleteCampaign(c.id)}
+                onLaunch={() => handleLaunchCampaign(c.id)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -154,6 +155,80 @@ export default function ActivationPage() {
   );
 }
 
+function CampaignCard({ campaign: c, index, expanded, onExpand, onToggle, onDelete, onLaunch }: {
+  campaign: any; index: number; expanded: boolean; onExpand: () => void; onToggle: () => void; onDelete: () => void; onLaunch: () => void;
+}) {
+  const { data: messages } = useCampaignMessages(expanded ? c.id : null);
+  const sentCount = messages?.filter(m => m.status === 'sent').length || 0;
+  const failedCount = messages?.filter(m => m.status === 'failed').length || 0;
+  const pendingCount = messages?.filter(m => m.status === 'pending').length || 0;
+  const total = messages?.length || c.contacts_count || 0;
+  const progress = total > 0 ? Math.round(((sentCount + failedCount) / total) * 100) : 0;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
+      className={`glass rounded-xl p-4 cursor-pointer transition-all ${c.status === 'active' ? 'border-primary/30' : ''}`}
+      onClick={onExpand}>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <h4 className="font-semibold text-foreground text-sm">{c.name}</h4>
+          <p className="text-xs text-muted-foreground">{filterTypes.find(f => f.key === c.filter_type)?.label || c.filter_type}</p>
+        </div>
+        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+          {c.status === 'draft' && (
+            <button onClick={onLaunch} className="p-1.5 rounded-lg hover:bg-accent/10" title="Disparar">
+              <Rocket size={14} className="text-accent" />
+            </button>
+          )}
+          <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-secondary">
+            {c.status === 'active' ? <Pause size={14} className="text-accent" /> : <Play size={14} className="text-muted-foreground" />}
+          </button>
+          <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-destructive/10">
+            <Trash2 size={14} className="text-destructive" />
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      {(c.status === 'active' || c.status === 'completed') && total > 0 && (
+        <div className="mb-3">
+          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+            <span>{sentCount + failedCount}/{total} processados</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-brand transition-all duration-500" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-4 text-xs text-muted-foreground">
+        <span>{c.contacts_count} contatos</span>
+        {sentCount > 0 && <span className="text-accent flex items-center gap-1"><CheckCircle2 size={10} /> {sentCount}</span>}
+        {failedCount > 0 && <span className="text-destructive flex items-center gap-1"><AlertCircle size={10} /> {failedCount}</span>}
+        <span className={`px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-accent/10 text-accent' : c.status === 'completed' ? 'bg-primary/10 text-primary' : c.status === 'draft' ? 'bg-secondary text-muted-foreground' : 'bg-warning/10 text-warning'}`}>
+          {c.status === 'active' ? 'Enviando...' : c.status === 'completed' ? 'Concluída' : c.status === 'draft' ? 'Rascunho' : 'Pausada'}
+        </span>
+      </div>
+
+      {/* Expanded: message details */}
+      {expanded && messages && messages.length > 0 && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 border-t border-border pt-3 max-h-48 overflow-y-auto space-y-2">
+          {messages.slice(0, 15).map(m => (
+            <div key={m.id} className="flex items-center justify-between text-xs">
+              <span className="text-foreground truncate max-w-[120px]">{m.contact_name}</span>
+              <span className="text-muted-foreground font-mono text-[10px]">{m.contact_phone}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${m.status === 'sent' ? 'bg-accent/10 text-accent' : m.status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-muted-foreground'}`}>
+                {m.status === 'sent' ? '✓ Enviado' : m.status === 'failed' ? '✗ Falhou' : '⏳ Pendente'}
+              </span>
+            </div>
+          ))}
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 function CampaignFormModal({ onClose, onCreate, leadsCount, selectedFilter }: {
   onClose: () => void;
   onCreate: ReturnType<typeof useCreateCampaign>;
@@ -166,6 +241,29 @@ function CampaignFormModal({ onClose, onCreate, leadsCount, selectedFilter }: {
     filter_days_since: 30,
     message_prompt: '',
   });
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAiSuggest = async () => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-activation-message', {
+        body: {
+          filter_type: form.filter_type,
+          filter_days_since: form.filter_days_since,
+          user_prompt: form.message_prompt,
+        },
+      });
+      if (error) throw error;
+      if (data?.suggestion) {
+        setForm(f => ({ ...f, message_prompt: data.suggestion }));
+        toast.success('Sugestão gerada pela IA!');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao gerar sugestão');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,10 +302,18 @@ function CampaignFormModal({ onClose, onCreate, leadsCount, selectedFilter }: {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Prompt da campanha</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium text-foreground">Mensagem da campanha</label>
+              <button type="button" onClick={handleAiSuggest} disabled={aiLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 disabled:opacity-50 transition-all">
+                {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                Sugerir com IA
+              </button>
+            </div>
             <textarea value={form.message_prompt} onChange={e => setForm(f => ({ ...f, message_prompt: e.target.value }))}
               className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[100px] resize-none"
-              placeholder="Descreva a abordagem que a IA deve usar..." />
+              placeholder="Descreva a abordagem ou clique em 'Sugerir com IA'..." />
+            <p className="text-xs text-muted-foreground mt-1">Use {'{nome}'} para personalizar com o nome do contato</p>
           </div>
           <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-sm text-muted-foreground">
             <Zap size={14} className="inline text-primary mr-1" /> {leadsCount} contatos serão incluídos nesta campanha

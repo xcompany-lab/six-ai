@@ -17,6 +17,18 @@ export interface ActivationCampaign {
   updated_at: string;
 }
 
+export interface CampaignMessage {
+  id: string;
+  campaign_id: string;
+  user_id: string;
+  contact_name: string;
+  contact_phone: string;
+  message_text: string;
+  status: string;
+  sent_at: string | null;
+  error_message: string | null;
+}
+
 export function useActivationCampaigns() {
   const { user } = useAuth();
   return useQuery({
@@ -27,6 +39,25 @@ export function useActivationCampaigns() {
       return (data || []) as unknown as ActivationCampaign[];
     },
     enabled: !!user,
+    refetchInterval: 10000,
+  });
+}
+
+export function useCampaignMessages(campaignId: string | null) {
+  return useQuery({
+    queryKey: ['campaign_messages', campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('campaign_messages')
+        .select('*')
+        .eq('campaign_id', campaignId!)
+        .order('created_at')
+        .limit(100);
+      if (error) throw error;
+      return (data || []) as unknown as CampaignMessage[];
+    },
+    enabled: !!campaignId,
+    refetchInterval: 5000,
   });
 }
 
