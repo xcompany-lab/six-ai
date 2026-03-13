@@ -63,6 +63,11 @@ export default function OnboardingPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
+  const [pricingStep, setPricingStep] = useState(false);
+  const [isExtractingServices, setIsExtractingServices] = useState(false);
+  const [extractedServices, setExtractedServices] = useState<ServicePrice[]>([]);
+  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [plansText, setPlansText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
