@@ -75,13 +75,23 @@ export default function AgendaPage() {
   return (
     <div>
       <PageHeader title="Agenda Integrada" subtitle="Visualize e gerencie sua agenda">
-        <div className="flex gap-1 p-1 rounded-lg bg-secondary">
-          {(Object.keys(viewLabels) as ViewType[]).map(v => (
-            <button key={v} onClick={() => setView(v)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === v ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              {viewLabels[v]}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleManualSync}
+            disabled={syncGoogle.isPending}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={syncGoogle.isPending ? 'animate-spin' : ''} />
+            Sincronizar
+          </button>
+          <div className="flex gap-1 p-1 rounded-lg bg-secondary">
+            {(Object.keys(viewLabels) as ViewType[]).map(v => (
+              <button key={v} onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === v ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                {viewLabels[v]}
+              </button>
+            ))}
+          </div>
         </div>
       </PageHeader>
 
