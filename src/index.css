@@ -231,6 +231,74 @@
   animation: shimmer 3s linear infinite;
 }
 
+/* Cyber Buttons */
+.cyber-btn {
+  position: relative;
+  display: inline-flex;
+  border-radius: 0.75rem;
+  padding: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  transition: box-shadow 0.3s;
+}
+
+.cyber-btn::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: 0;
+  animation: cyberRotate 3s linear infinite;
+}
+
+.cyber-btn-primary::before {
+  background: conic-gradient(from 0deg, transparent 0%, transparent 40%, hsl(199 89% 48%) 55%, hsl(160 84% 50%) 65%, transparent 80%, transparent 100%);
+}
+.cyber-btn-primary {
+  box-shadow: 0 0 20px rgba(0,212,212,0.15), 0 4px 16px rgba(0,0,0,0.5);
+}
+.cyber-btn-primary:hover {
+  box-shadow: 0 0 30px rgba(0,212,212,0.25), 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.cyber-btn-outline::before {
+  background: conic-gradient(from 0deg, transparent 0%, transparent 50%, hsl(220 15% 30%) 65%, hsl(220 15% 50%) 70%, transparent 85%, transparent 100%);
+}
+.cyber-btn-outline {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.cyber-btn-inner {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(0.75rem - 2px);
+  padding: 0 2rem;
+  height: 3rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transition: background 0.3s;
+}
+
+.cyber-btn-primary .cyber-btn-inner {
+  background: linear-gradient(135deg, hsl(199 89% 48%), hsl(160 84% 50%));
+  color: hsl(220 20% 4%);
+}
+.cyber-btn-primary:hover .cyber-btn-inner {
+  background: linear-gradient(135deg, hsl(199 89% 52%), hsl(160 84% 55%));
+}
+
+.cyber-btn-outline .cyber-btn-inner {
+  background: hsl(220 20% 4%);
+  color: hsl(210 20% 95%);
+}
+.cyber-btn-outline:hover .cyber-btn-inner {
+  background: hsl(220 18% 7%);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
