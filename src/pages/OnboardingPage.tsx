@@ -469,7 +469,7 @@ export default function OnboardingPage() {
             </div>
 
             <p className="text-center text-xs text-muted-foreground/50 mt-3">
-              {currentStep + 1} de {totalSteps} · Pressione Enter para enviar
+              {isRecording ? '🔴 Gravando... clique no botão para parar' : isTranscribing ? '⏳ Transcrevendo áudio...' : `${currentStep + 1} de ${totalSteps} · Enter para enviar · 🎙 ou use o microfone`}
             </p>
           </motion.div>
         )}
