@@ -94,14 +94,7 @@ export default function ProfilePage() {
       setForm({
         name: profile.name || '',
         brand_name: profile.brand_name || '',
-        niche: profile.niche || '',
         whatsapp: profile.whatsapp || '',
-        voice_tone: profile.voice_tone || 'Profissional e acolhedor',
-        services: profile.services?.join(', ') || '',
-        address: profile.address || '',
-        business_hours: profile.business_hours || '08:00 - 18:00',
-        business_description: profile.business_description || '',
-        objective: profile.objective || '',
       });
     }
   }, [profile]);
