@@ -45,10 +45,15 @@ export default function OnboardingPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const userResponses = useRef<string[]>([]);
+  const allAttachments = useRef<Attachment[]>([]);
   const allAttachments = useRef<Attachment[]>([]);
 
   // Auto-resize textarea
