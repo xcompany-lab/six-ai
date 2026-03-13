@@ -57,9 +57,12 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 justify-center mb-8">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="badge-gradient-brand">Smart Interaction eXperience</span>
+            <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-4 mb-8">
+              <img src={sixLogo} alt="SIX AI" className="h-14 sm:h-16" />
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="badge-gradient-brand">Smart Interaction eXperience</span>
+              </div>
             </motion.div>
 
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-6">
@@ -89,14 +92,16 @@ export default function HomePage() {
 
             {/* CTAs */}
             <motion.div variants={fadeUp} custom={4} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="bg-gradient-brand text-primary-foreground px-8 h-12 text-base glow-blue" asChild>
-                <a href={trialUrl} target="_blank" rel="noopener noreferrer">
-                  Começar Teste Gratuito de 5 Dias <ArrowRight className="ml-1 h-5 w-5" />
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 text-base" asChild>
-                <a href="#como-funciona">Ver como funciona</a>
-              </Button>
+              <a href={trialUrl} target="_blank" rel="noopener noreferrer" className="cyber-btn cyber-btn-primary">
+                <span className="cyber-btn-inner">
+                  Começar Teste Gratuito de 5 Dias <ArrowRight className="ml-1 h-5 w-5 inline" />
+                </span>
+              </a>
+              <a href="#como-funciona" className="cyber-btn cyber-btn-outline">
+                <span className="cyber-btn-inner">
+                  Ver como funciona
+                </span>
+              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -400,11 +405,11 @@ export default function HomePage() {
               Teste o SIX AI gratuitamente por 5 dias e veja como a inteligência artificial pode transformar seu WhatsApp em um sistema automático de vendas.
             </motion.p>
             <motion.div variants={fadeUp} custom={2}>
-              <Button size="lg" className="bg-gradient-brand text-primary-foreground px-10 h-14 text-lg glow-blue" asChild>
-                <a href={trialUrl} target="_blank" rel="noopener noreferrer">
-                  Começar Teste Gratuito <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
-              </Button>
+              <a href={trialUrl} target="_blank" rel="noopener noreferrer" className="cyber-btn cyber-btn-primary text-lg">
+                <span className="cyber-btn-inner px-10 h-14">
+                  Começar Teste Gratuito <ArrowRight className="ml-2 h-5 w-5 inline" />
+                </span>
+              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -414,8 +419,7 @@ export default function HomePage() {
       <footer className="border-t border-border py-10 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-bold">SIX <span className="text-primary">AI</span></span>
+            <img src={sixLogo} alt="SIX AI" className="h-6" />
           </div>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Sem taxa de implementação</span>
