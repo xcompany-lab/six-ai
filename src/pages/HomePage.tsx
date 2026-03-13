@@ -6,6 +6,7 @@ import {
   Shield, Star, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-nobg.png';
 
@@ -56,8 +57,9 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium mb-8">
-              <Zap className="h-4 w-4" /> Smart Interaction eXperience
+            <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 justify-center mb-8">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="badge-gradient-brand">Smart Interaction eXperience</span>
             </motion.div>
 
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-6">
@@ -137,9 +139,7 @@ export default function HomePage() {
                 { icon: BarChart3, label: 'Gerar insights para vender mais' },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-3 p-4 rounded-xl glass">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
+                  <CyberIcon icon={Icon} variant="cyan" size="sm" />
                   <span className="text-sm font-medium text-foreground">{label}</span>
                 </div>
               ))}
@@ -163,8 +163,8 @@ export default function HomePage() {
                 { step: '03', title: 'Deixe a IA trabalhar', desc: 'Ela responde leads, agenda horários e faz follow-ups automaticamente.', icon: Zap },
               ].map(({ step, title, desc, icon: Icon }, i) => (
                 <motion.div key={step} variants={fadeUp} custom={i} className="relative text-center">
-                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-brand mb-6">
-                    <Icon className="h-7 w-7 text-primary-foreground" />
+                  <div className="inline-block mb-6">
+                    <CyberIcon icon={Icon} variant="cyan" size="lg" />
                   </div>
                   <div className="absolute -top-2 -right-2 md:right-auto md:-left-2 text-xs font-mono font-bold text-primary bg-primary/10 rounded-full h-8 w-8 flex items-center justify-center">
                     {step}
@@ -196,8 +196,8 @@ export default function HomePage() {
                 { icon: Clock, title: 'Economia de tempo', desc: 'Automatize tarefas repetitivas e foque no que realmente importa.' },
               ].map(({ icon: Icon, title, desc }, i) => (
                 <motion.div key={title} variants={fadeUp} custom={i} className="p-6 rounded-2xl glass hover:border-primary/30 transition-colors group">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="h-6 w-6 text-primary" />
+                  <div className="mb-4">
+                    <CyberIcon icon={Icon} variant="cyan" size="md" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{title}</h3>
                   <p className="text-sm text-muted-foreground">{desc}</p>
@@ -213,8 +213,9 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger} className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-accent/5 text-accent text-xs font-medium mb-6">
-                <Sparkles className="h-3.5 w-3.5" /> Exclusivo do Plano Pro
+              <motion.div variants={fadeUp} className="flex items-center gap-2 mb-6">
+                <Sparkles className="h-3.5 w-3.5 text-accent" />
+                <span className="badge-gradient-accent">Exclusivo do Plano Pro</span>
               </motion.div>
               <motion.h2 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl font-bold mb-6">
                 Uma IA estratégica <span className="text-gradient-brand">analisando seu negócio</span>
@@ -375,8 +376,8 @@ export default function HomePage() {
                 { icon: Calendar, label: 'Reduzir faltas' },
                 { icon: MessageSquare, label: 'Recuperar contatos' },
               ].map(({ icon: Icon, label }, i) => (
-                <motion.div key={label} variants={fadeUp} custom={i} className="p-5 rounded-xl glass text-center">
-                  <Icon className="h-6 w-6 text-primary mx-auto mb-3" />
+                <motion.div key={label} variants={fadeUp} custom={i} className="p-5 rounded-xl glass text-center flex flex-col items-center">
+                  <CyberIcon icon={Icon} variant="cyan" size="sm" className="mb-3" />
                   <span className="text-sm font-medium">{label}</span>
                 </motion.div>
               ))}
