@@ -52,6 +52,9 @@ export default function OnboardingPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const userResponses = useRef<string[]>([]);
   const allAttachments = useRef<Attachment[]>([]);
 
@@ -105,16 +108,77 @@ export default function OnboardingPage() {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const drawWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    const analyser = analyserRef.current;
+    if (!canvas || !analyser) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      animationFrameRef.current = requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(dataArray);
+
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+
+      // Gradient line
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, 'hsl(199, 89%, 48%)');
+      gradient.addColorStop(0.5, 'hsl(185, 80%, 55%)');
+      gradient.addColorStop(1, 'hsl(160, 84%, 50%)');
+
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = gradient;
+      ctx.beginPath();
+
+      const sliceWidth = width / bufferLength;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * height) / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      ctx.lineTo(width, height / 2);
+      ctx.stroke();
+    };
+
+    draw();
+  }, []);
+
+  const stopWaveform = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    analyserRef.current = null;
+  }, []);
+
   const toggleRecording = async () => {
     if (isRecording) {
-      // Stop recording
       mediaRecorderRef.current?.stop();
       setIsRecording(false);
+      stopWaveform();
       return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Setup audio analyser for waveform
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -125,8 +189,9 @@ export default function OnboardingPage() {
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
+        audioContext.close();
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
+
         setIsTranscribing(true);
         try {
           const reader = new FileReader();
@@ -157,6 +222,9 @@ export default function OnboardingPage() {
 
       mediaRecorder.start();
       setIsRecording(true);
+
+      // Start waveform after a tick so canvas is rendered
+      setTimeout(() => drawWaveform(), 50);
     } catch (err) {
       console.error('Mic access error:', err);
       toast.error('Não foi possível acessar o microfone.');
@@ -406,17 +474,29 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isRecording ? "Gravando áudio..." : "Digite sua resposta ou use o microfone..."}
-                rows={3}
-                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
-                disabled={isGenerating || isRecording}
-              />
+              {/* Textarea or Waveform */}
+              {isRecording ? (
+                <div className="relative z-10 flex items-center gap-3 px-2 py-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse shrink-0" />
+                  <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={60}
+                    className="w-full h-[60px] rounded-lg"
+                  />
+                </div>
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isTranscribing ? "Transcrevendo áudio..." : "Digite sua resposta ou use o microfone..."}
+                  rows={3}
+                  className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
+                  disabled={isGenerating || isTranscribing}
+                />
+              )}
 
               {/* Bottom bar: attachment buttons + send */}
               <div className="flex items-center justify-between pt-1 px-1 relative z-10">
