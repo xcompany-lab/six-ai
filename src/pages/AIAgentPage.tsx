@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X } from 'lucide-react';
+import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBusinessProfile, useSaveBusinessProfile, type ServicePriceItem } from '@/hooks/use-business-profile';
 import { useAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
-import { useAgentConfigs } from '@/hooks/use-agent-configs';
+import { useAgentConfigs, useRefineAgentPrompt } from '@/hooks/use-agent-configs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -24,10 +24,12 @@ const PAYMENT_OPTIONS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Di
 export default function AIAgentPage() {
   const navigate = useNavigate();
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+  const [refineInput, setRefineInput] = useState('');
   const { data: profile, isLoading: loadingProfile } = useBusinessProfile();
   const { data: agentConfig, isLoading: loadingConfig } = useAIAgentConfig();
   const { data: agentConfigs = [] } = useAgentConfigs();
   const { data: memories = [] } = useContactMemories();
+  const refinePrompt = useRefineAgentPrompt();
 
   const isActive = agentConfig?.active ?? true;
 
@@ -130,13 +132,47 @@ export default function AIAgentPage() {
                   })}
                 </div>
                 <AnimatePresence>
-                  {agentConfigs.map(ac => expandedAgent === ac.id && ac.system_prompt ? (
+                  {agentConfigs.map(ac => expandedAgent === ac.id ? (
                     <motion.div key={`prompt-${ac.id}`}
                       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden">
-                      <ScrollArea className="max-h-[400px] rounded-lg border border-border bg-secondary/30 p-4">
-                        <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt}</pre>
-                      </ScrollArea>
+                      <div className="rounded-lg border border-border bg-secondary/30">
+                        <ScrollArea className="max-h-[400px] p-4">
+                          <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt || 'Prompt vazio'}</pre>
+                        </ScrollArea>
+                        <div className="border-t border-border p-3">
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!refineInput.trim() || refinePrompt.isPending) return;
+                            const instruction = refineInput.trim();
+                            setRefineInput('');
+                            refinePrompt.mutate({
+                              agentConfigId: ac.id,
+                              currentPrompt: ac.system_prompt || '',
+                              userInstruction: instruction,
+                              agentType: ac.agent_type,
+                            }, {
+                              onSuccess: () => {
+                                toast({ title: 'Prompt atualizado', description: 'O agente foi refinado com suas instruções.' });
+                              },
+                              onError: () => {
+                                toast({ title: 'Erro ao refinar', description: 'Tente novamente.', variant: 'destructive' });
+                              },
+                            });
+                          }} className="flex items-center gap-2">
+                            <Input
+                              placeholder="O que você quer alterar ou incrementar nesse agente?"
+                              value={refineInput}
+                              onChange={e => setRefineInput(e.target.value)}
+                              disabled={refinePrompt.isPending}
+                              className="flex-1 text-sm"
+                            />
+                            <Button type="submit" size="icon" disabled={!refineInput.trim() || refinePrompt.isPending} className="shrink-0">
+                              {refinePrompt.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                            </Button>
+                          </form>
+                        </div>
+                      </div>
                     </motion.div>
                   ) : null)}
                 </AnimatePresence>

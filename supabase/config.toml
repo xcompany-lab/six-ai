@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.extract-services]
 verify_jwt = false
+
+[functions.refine-agent-prompt]
+verify_jwt = false
