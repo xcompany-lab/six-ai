@@ -169,7 +169,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Perfil do Usuário" subtitle="Gerencie seus dados e configure o contexto da IA">
+      <PageHeader title="Perfil do Usuário" subtitle="Gerencie seus dados pessoais">
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-brand text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Salvar
         </button>
