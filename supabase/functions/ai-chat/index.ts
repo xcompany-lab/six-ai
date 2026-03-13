@@ -95,6 +95,13 @@ serve(async (req) => {
       }
     }
 
+    // Inject current date
+    const hoje = new Date().toLocaleDateString("pt-BR", {
+      weekday: "long", day: "2-digit", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
+    });
+    systemPrompt += `\n\n[CONTEXTO TEMPORAL]\nData e hora atual: ${hoje}\nCalcule datas relativas a partir desta data. NUNCA invente datas.`;
     systemPrompt += `\n\nIMPORTANTE: Na interface web, responda de forma concisa e natural.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

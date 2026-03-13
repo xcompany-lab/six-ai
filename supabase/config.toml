@@ -42,6 +42,8 @@ verify_jwt = false
 [functions.process-followup]
 verify_jwt = false
 
-[functions.transcribe-onboarding-audio]
+[functions.process-message-queue]
 verify_jwt = false
+
+[functions.transcribe-onboarding-audio]
 verify_jwt = false
