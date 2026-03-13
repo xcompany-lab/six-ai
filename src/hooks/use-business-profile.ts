@@ -15,8 +15,17 @@ export interface BusinessProfile {
   qualified_lead_criteria: string;
   working_hours: Record<string, unknown>;
   follow_up_config: Record<string, unknown>;
+  service_prices: ServicePriceItem[];
   created_at: string;
   updated_at: string;
+}
+
+export interface ServicePriceItem {
+  name: string;
+  price: string;
+  notes?: string;
+  payment_methods?: string[];
+  plans?: string;
 }
 
 export function useBusinessProfile() {
