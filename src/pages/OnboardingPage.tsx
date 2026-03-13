@@ -240,7 +240,7 @@ export default function OnboardingPage() {
               transition={{ duration: 0.4 }}
               className="text-center"
             >
-              <h1 className="text-2xl md:text-3xl font-bold leading-relaxed text-foreground whitespace-pre-wrap">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-relaxed whitespace-pre-wrap text-gradient-glow">
                 {renderMarkdown(QUESTIONS[currentStep].content)}
               </h1>
             </motion.div>
