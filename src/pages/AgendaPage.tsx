@@ -173,6 +173,7 @@ function WeekView({ appointments, currentDate }: { appointments: Appointment[]; 
                 <div key={a.id} className={`p-2 rounded-lg text-xs border ${statusColors[a.status] || 'bg-secondary/50'}`}>
                   <p className="font-medium truncate">{a.time?.slice(0, 5)} {a.lead_name}</p>
                   <p className="text-muted-foreground truncate">{a.service}</p>
+                  {a.notes && <p className="text-muted-foreground truncate opacity-70">{a.notes}</p>}
                 </div>
               ))}
             </div>
