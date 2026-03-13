@@ -282,15 +282,8 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Nome completo" value={form.name} onChange={update('name')} placeholder="Seu nome" />
             <Field label="Nome da marca" value={form.brand_name} onChange={update('brand_name')} placeholder="Nome da empresa" />
-            <Field label="Nicho" value={form.niche} onChange={update('niche')} placeholder="Ex: Estética" />
-            <Field label="WhatsApp" value={form.whatsapp} onChange={update('whatsapp')} placeholder="+55 11 99999-9999" />
-            <Field label="Tom de voz da marca" value={form.voice_tone} onChange={update('voice_tone')} placeholder="Profissional e acolhedor" />
-            <Field label="Horário de atendimento" value={form.business_hours} onChange={update('business_hours')} placeholder="08:00 - 18:00" />
           </div>
-          <Field label="Serviços (separados por vírgula)" value={form.services} onChange={update('services')} placeholder="Botox, Limpeza de Pele..." />
-          <Field label="Endereço" value={form.address} onChange={update('address')} placeholder="Endereço completo" />
-          <Field label="Objetivo principal" value={form.objective} onChange={update('objective')} placeholder="O que deseja alcançar" />
-          <Field label="Descrição do negócio" value={form.business_description} onChange={update('business_description')} placeholder="Descreva seu negócio para alimentar a IA..." textarea />
+          <Field label="WhatsApp" value={form.whatsapp} onChange={update('whatsapp')} placeholder="+55 11 99999-9999" />
         </motion.div>
       </div>
     </div>
