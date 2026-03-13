@@ -153,7 +153,7 @@ export default function OnboardingPage() {
   const renderMarkdown = (text: string) =>
     text.split(/(\*\*.*?\*\*)/).map((part, j) =>
       part.startsWith('**') && part.endsWith('**')
-        ? <strong key={j} className="text-foreground">{part.slice(2, -2)}</strong>
+        ? <strong key={j} className="text-foreground font-extrabold">{part.slice(2, -2)}</strong>
         : part
     );
 
