@@ -49,6 +49,13 @@ const sections: LegalSection[] = [
           <li>Dados de instância WhatsApp (via Evolution API)</li>
           <li>Memória de contato: resumo de interações, sentimento e preferências</li>
         </ul>
+        <h3 className="text-foreground font-semibold mt-4 mb-2">Dados de Integração Google</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Token de acesso e refresh token do Google Calendar, obtidos via autorização OAuth 2.0 explícita do Usuário</li>
+          <li>Escopo solicitado: <code className="text-foreground bg-muted px-1 rounded">calendar.events</code> — permite apenas leitura e escrita de eventos na Google Agenda</li>
+          <li>Dados <strong className="text-foreground">NÃO</strong> acessados: e-mails (Gmail), contatos (Google Contacts), arquivos (Google Drive) ou qualquer outro dado da conta Google do Usuário</li>
+          <li>Os tokens são armazenados de forma criptografada com isolamento por usuário (Row Level Security)</li>
+        </ul>
       </>
     ),
   },
@@ -65,6 +72,7 @@ const sections: LegalSection[] = [
           <li><strong className="text-foreground">Análises e Insights:</strong> gerar relatórios de performance, métricas de conversão e análise de sentimento.</li>
           <li><strong className="text-foreground">Comunicação:</strong> enviar notificações sobre a conta, atualizações da Plataforma e suporte técnico.</li>
           <li><strong className="text-foreground">Melhoria contínua:</strong> aprimorar as funcionalidades e a experiência do Usuário.</li>
+          <li><strong className="text-foreground">Integração Google Agenda:</strong> utilizar os tokens OAuth exclusivamente para criar, atualizar e sincronizar eventos de agendamento na Google Agenda do Usuário. Nenhum dado do Google é utilizado para fins de marketing, publicidade ou compartilhado com terceiros.</li>
         </ul>
       </>
     ),
@@ -136,6 +144,7 @@ const sections: LegalSection[] = [
           <li><strong className="text-foreground">Informação:</strong> ser informado sobre as entidades com as quais os dados são compartilhados.</li>
         </ul>
         <p>Para exercer seus direitos, entre em contato pelo e-mail <span className="text-foreground">contato@xcompanytech.com</span> ou através do módulo de Suporte na Plataforma.</p>
+        <p className="mt-2"><strong className="text-foreground">Integração Google:</strong> o Usuário pode desconectar a integração com Google Agenda a qualquer momento através da página de Configurações da Plataforma. Ao desconectar, os tokens de acesso são imediatamente removidos e o acesso à Google Agenda é revogado.</p>
       </>
     ),
   },

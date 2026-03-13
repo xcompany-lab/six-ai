@@ -53,7 +53,7 @@ const sections: LegalSection[] = [
         <ul className="list-disc pl-5 space-y-2">
           <li><strong className="text-foreground">CRM Inteligente:</strong> gestão de leads com classificação automática por IA (novo, qualificado, agendado, cliente, perdido).</li>
           <li><strong className="text-foreground">Atendente IA:</strong> atendimento automatizado via WhatsApp com IA generativa, configurável por tom de voz, FAQ, objeções e base de conhecimento.</li>
-          <li><strong className="text-foreground">Agendamentos:</strong> sistema de agendamento com integração ao Google Calendar, lembretes automáticos e confirmação via WhatsApp.</li>
+          <li><strong className="text-foreground">Agendamentos:</strong> sistema de agendamento com integração ao Google Calendar, lembretes automáticos e confirmação via WhatsApp. A integração com Google Agenda requer autorização OAuth 2.0 explícita do Usuário, solicitando apenas o escopo <code className="bg-muted px-1 rounded">calendar.events</code> (leitura e escrita de eventos). Nenhum outro dado da conta Google é acessado.</li>
           <li><strong className="text-foreground">Follow-up Automático:</strong> fluxos de acompanhamento personalizáveis com gatilhos baseados em status do lead.</li>
           <li><strong className="text-foreground">Ativação de Base:</strong> campanhas de reativação com segmentação, sugestão IA de mensagens e agendamento de disparos.</li>
           <li><strong className="text-foreground">Kanban:</strong> visualização e gestão do pipeline comercial.</li>
