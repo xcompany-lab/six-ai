@@ -433,6 +433,93 @@ async function processQueueItem(
         .from("leads")
         .update({ current_agent: "scheduler", status: "awaiting_schedule" })
         .eq("id", leadId);
+
+      // Immediately call scheduler agent to continue the conversation
+      try {
+        const { data: schedulerConfig } = await supabaseAdmin
+          .from("agent_configs")
+          .select("system_prompt")
+          .eq("user_id", userId)
+          .eq("agent_type", "scheduler")
+          .maybeSingle();
+
+        if (schedulerConfig?.system_prompt) {
+          const hoje = getBrazilianDateTime();
+          const schedulerPrompt = schedulerConfig.system_prompt +
+            `\n\n[CONTEXTO TEMPORAL]\nData e hora atual: ${hoje}\nCalcule datas relativas a partir desta data. NUNCA invente datas.`;
+
+          // Load scheduling config for available slots
+          const { data: schedConfig } = await supabaseAdmin
+            .from("scheduling_config")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          let schedContext = "";
+          if (schedConfig) {
+            const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const workDays = (schedConfig.work_days || [1,2,3,4,5]).map((d: number) => dayNames[d]).join(", ");
+            schedContext = `\n\n[CONFIGURAÇÃO DE AGENDA]\nDias de trabalho: ${workDays}\nHorário: ${schedConfig.work_start} às ${schedConfig.work_end}\nAlmoço: ${schedConfig.lunch_start || "N/A"} às ${schedConfig.lunch_end || "N/A"}\nDuração padrão: ${schedConfig.default_duration}min`;
+          }
+
+          // Get conversation history for context
+          const { data: schedHistory } = await supabaseAdmin
+            .from("conversation_messages")
+            .select("role, content")
+            .eq("lead_id", leadId)
+            .order("created_at", { ascending: true })
+            .limit(20);
+
+          const schedMessages = (schedHistory || []).map((m: { role: string; content: string }) => ({
+            role: m.role, content: m.content
+          }));
+
+          const schedAiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [
+                { role: "system", content: schedulerPrompt + schedContext },
+                ...schedMessages,
+              ],
+            }),
+          });
+
+          if (schedAiResponse.ok) {
+            const schedData = await schedAiResponse.json();
+            const schedRawReply = schedData.choices?.[0]?.message?.content || "";
+            console.log(`Scheduler follow-up reply: ${schedRawReply.slice(0, 200)}`);
+
+            const { messages: schedReplyMsgs, intent: schedIntent, parsedJson: schedParsedJson } = parseAIResponse(schedRawReply);
+            await sendSplitMessages(contactPhone, schedReplyMsgs, instanceName);
+            console.log(`Sent ${schedReplyMsgs.length} scheduler messages to ${contactPhone}`);
+
+            // Save scheduler response to history
+            await supabaseAdmin.from("conversation_messages").insert({
+              user_id: userId,
+              lead_id: leadId,
+              role: "assistant",
+              content: schedReplyMsgs.join("\n"),
+            });
+
+            // Handle if scheduler immediately booked
+            if (schedIntent === "booked" && schedParsedJson) {
+              // Will be handled by the booked intent block below on next cycle
+              intent = "booked";
+              Object.assign(parsedJson || {}, schedParsedJson);
+            }
+          } else {
+            await schedAiResponse.text();
+            console.error("Scheduler follow-up failed");
+          }
+        }
+      } catch (schedErr) {
+        console.error("Scheduler follow-up error:", schedErr);
+      }
     }
 
     if (intent === "booked" && parsedJson) {
