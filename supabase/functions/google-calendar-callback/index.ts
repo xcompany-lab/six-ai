@@ -23,7 +23,7 @@ serve(async (req) => {
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
       console.error("Google OAuth secrets not configured");
-      return Response.redirect("https://six-ai.lovable.app/settings?google=error");
+      return Response.redirect("https://usesix.com.br/app/configuracoes?google=error");
     }
 
     // Exchange authorization code for tokens
