@@ -68,7 +68,6 @@ function AppRoutes() {
       <Route path="/privacidade" element={<PrivacyPage />} />
       <Route path="/onboarding" element={
         !isAuthenticated ? <Navigate to="/" replace /> :
-        isOnboarded ? <Navigate to="/app" replace /> :
         <OnboardingPage />
       } />
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
