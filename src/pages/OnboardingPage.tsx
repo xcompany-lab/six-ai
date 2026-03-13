@@ -105,6 +105,64 @@ export default function OnboardingPage() {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        setIsTranscribing(true);
+        try {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          const { data, error } = await supabase.functions.invoke('transcribe-onboarding-audio', {
+            body: { audio_base64: base64 },
+          });
+
+          if (error) throw error;
+          if (data?.text) {
+            setInputText(prev => prev ? `${prev} ${data.text}` : data.text);
+          }
+        } catch (err) {
+          console.error('Transcription error:', err);
+          toast.error('Erro ao transcrever áudio. Tente novamente.');
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Mic access error:', err);
+      toast.error('Não foi possível acessar o microfone.');
+    }
+  };
+
   const sendMessage = useCallback(async () => {
     const text = inputText.trim();
     if (!text && attachments.length === 0) return;
