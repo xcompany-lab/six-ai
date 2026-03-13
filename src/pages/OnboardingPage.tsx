@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe } from 'lucide-react';
+import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import sixLogo from '@/assets/six-logo-dark.png';
+import sixLogoHero from '@/assets/six-logo-hero.png';
 
 // Types
 interface Attachment {
@@ -15,41 +15,36 @@ interface Attachment {
   storagePath?: string;
 }
 
-interface ChatMessage {
-  role: 'ai' | 'user';
-  content: string;
-  attachments?: Attachment[];
-}
-
 // Hardcoded orchestrator questions
-const QUESTIONS: string[] = [
-  "Olá! 👋 Sou o orquestrador do SIX AI. Vou te fazer algumas perguntas sobre seu negócio e com suas respostas vou criar agentes de IA completos e personalizados para você.\n\nPara começar: **me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nPode ser à vontade — quanto mais detalhe, melhor seus agentes ficam.\n\nVocê também pode anexar o link do seu Instagram, site, cardápio, tabela de preços ou qualquer arquivo que me ajude a entender sua marca.",
-  "Perfeito! Agora me conta: **qual é a maior objeção que seus clientes têm antes de fechar?** E como você costuma responder quando isso acontece?\n\nSe tiver mais de uma objeção, pode listar todas!",
-  "Última pergunta: **como você prefere que a IA se comunique com seus clientes?** Mais formal, descontraída, direta?\n\nE qual é o **resultado mais importante** que você quer alcançar com a automação?",
+const QUESTIONS: { label: string; content: string }[] = [
+  {
+    label: 'Sobre o negócio',
+    content: "Olá! 👋 Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
+  },
+  {
+    label: 'Objeções',
+    content: "**Qual é a maior objeção que seus clientes têm antes de fechar?**\n\nE como você costuma responder quando isso acontece?\n\nSe tiver mais de uma objeção, pode listar todas!",
+  },
+  {
+    label: 'Tom e objetivo',
+    content: "**Como você prefere que a IA se comunique com seus clientes?**\n\nMais formal, descontraída, direta?\n\nE qual é o **resultado mais importante** que você quer alcançar com a automação?",
+  },
 ];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'ai', content: QUESTIONS[0] },
-  ]);
   const [currentStep, setCurrentStep] = useState(0);
   const [inputText, setInputText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const userResponses = useRef<string[]>([]);
   const allAttachments = useRef<Attachment[]>([]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isGenerating]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -63,20 +58,12 @@ export default function OnboardingPage() {
     if (!user) return null;
     setIsUploading(true);
     try {
-      const ext = file.name.split('.').pop();
       const path = `${user.id}/${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from('onboarding-files').upload(path, file);
       if (error) throw error;
-
       const { data: urlData } = supabase.storage.from('onboarding-files').getPublicUrl(path);
       const isImage = file.type.startsWith('image/');
-
-      return {
-        type: isImage ? 'image' : 'file',
-        name: file.name,
-        url: urlData.publicUrl,
-        storagePath: path,
-      };
+      return { type: isImage ? 'image' : 'file', name: file.name, url: urlData.publicUrl, storagePath: path };
     } catch (err) {
       console.error('Upload error:', err);
       toast.error(`Erro ao enviar ${file.name}`);
@@ -112,33 +99,21 @@ export default function OnboardingPage() {
     if (!text && attachments.length === 0) return;
     if (isGenerating) return;
 
-    // Add user message
-    const userMsg: ChatMessage = {
-      role: 'user',
-      content: text,
-      attachments: attachments.length > 0 ? [...attachments] : undefined,
-    };
-    setMessages(prev => [...prev, userMsg]);
     userResponses.current.push(text);
     allAttachments.current.push(...attachments);
+    setCompletedSteps(prev => [...prev, currentStep]);
     setInputText('');
     setAttachments([]);
 
     const nextStep = currentStep + 1;
 
     if (nextStep < QUESTIONS.length) {
-      // Show next question after a short delay
-      setTimeout(() => {
-        setMessages(prev => [...prev, { role: 'ai', content: QUESTIONS[nextStep] }]);
-        setCurrentStep(nextStep);
-      }, 800);
+      setCurrentStep(nextStep);
     } else {
-      // All questions answered — generate agents
       setCurrentStep(nextStep);
       setIsGenerating(true);
 
       try {
-        // Separate attachments by type
         const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
         const files = allAttachments.current.filter(a => a.type === 'file').map(a => a.url!);
         const images = allAttachments.current.filter(a => a.type === 'image').map(a => a.url!);
@@ -153,23 +128,14 @@ export default function OnboardingPage() {
         });
 
         if (error) throw error;
-
-        setMessages(prev => [...prev, {
-          role: 'ai',
-          content: '✅ **Seus agentes foram criados com sucesso!**\n\nCriei 4 agentes personalizados para o seu negócio:\n\n🎯 **Atendente** — responde dúvidas e conversa com seus clientes\n📅 **Agendador** — cuida dos agendamentos\n🔄 **Follow-up** — recupera leads que esfriaram\n📊 **CRM** — analisa e move leads no funil\n\nRedirecionando para o painel...',
-        }]);
-
         await refreshProfile();
-        setTimeout(() => navigate('/app', { replace: true }), 3000);
+        setTimeout(() => navigate('/app', { replace: true }), 2000);
       } catch (err) {
         console.error('Generation error:', err);
         setIsGenerating(false);
         toast.error('Erro ao gerar agentes. Tente novamente.');
-        setMessages(prev => [...prev, {
-          role: 'ai',
-          content: '❌ Houve um erro ao gerar seus agentes. Por favor, tente enviar sua última resposta novamente.',
-        }]);
         setCurrentStep(QUESTIONS.length - 1);
+        setCompletedSteps(prev => prev.filter(s => s !== QUESTIONS.length - 1));
       }
     }
   }, [inputText, attachments, currentStep, isGenerating, navigate, refreshProfile]);
@@ -184,156 +150,169 @@ export default function OnboardingPage() {
   const totalSteps = QUESTIONS.length;
   const isDone = currentStep >= totalSteps;
 
+  const renderMarkdown = (text: string) =>
+    text.split(/(\*\*.*?\*\*)/).map((part, j) =>
+      part.startsWith('**') && part.endsWith('**')
+        ? <strong key={j} className="text-foreground">{part.slice(2, -2)}</strong>
+        : part
+    );
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-border px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <img src={sixLogo} alt="SIX AI" className="h-8" />
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalSteps }).map((_, i) => (
+    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center px-4 py-8">
+      {/* Animated gradient background */}
+      <div className="fixed inset-0 bg-background" />
+      <div
+        className="fixed inset-0 opacity-[0.12] animate-gradient-shift"
+        style={{
+          background: 'radial-gradient(ellipse at 20% 50%, hsl(199 89% 48%), transparent 60%), radial-gradient(ellipse at 80% 50%, hsl(160 84% 50%), transparent 60%), radial-gradient(ellipse at 50% 100%, hsl(185 80% 55%), transparent 50%)',
+          backgroundSize: '400% 400%',
+        }}
+      />
+
+      {/* Floating orbs */}
+      <div className="fixed top-[15%] left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.06] blur-3xl animate-float-orb"
+        style={{ background: 'radial-gradient(circle, hsl(199 89% 48%), transparent 70%)' }}
+      />
+      <div className="fixed bottom-[10%] right-[10%] w-[400px] h-[400px] rounded-full opacity-[0.05] blur-3xl animate-float-orb-2"
+        style={{ background: 'radial-gradient(circle, hsl(160 84% 50%), transparent 70%)' }}
+      />
+      <div className="fixed top-[60%] left-[55%] w-[350px] h-[350px] rounded-full opacity-[0.04] blur-3xl animate-float-orb"
+        style={{ background: 'radial-gradient(circle, hsl(185 80% 55%), transparent 70%)', animationDelay: '4s' }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-8">
+        {/* Logo */}
+        <motion.img
+          src={sixLogoHero}
+          alt="SIX AI"
+          className="h-14 md:h-16"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        />
+
+        {/* Progress dots */}
+        <div className="flex items-center gap-3">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
               <div
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  i < currentStep ? 'bg-primary' :
-                  i === currentStep && !isDone ? 'bg-primary/50 animate-pulse' :
-                  isDone ? 'bg-primary' :
-                  'bg-muted'
+                className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                  completedSteps.includes(i) ? 'bg-accent w-2.5 h-2.5' :
+                  i === currentStep && !isDone ? 'bg-primary animate-pulse w-3 h-3' :
+                  isDone ? 'bg-accent w-2.5 h-2.5' :
+                  'bg-muted-foreground/30'
                 }`}
               />
-            ))}
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {isDone ? 'Concluído' : `${currentStep + 1} de ${totalSteps}`}
-          </span>
+              {i < totalSteps - 1 && (
+                <div className={`w-8 h-px transition-colors duration-500 ${
+                  completedSteps.includes(i) ? 'bg-accent/50' : 'bg-border'
+                }`} />
+              )}
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Subtitle */}
-      <div className="flex-shrink-0 text-center py-3">
-        <p className="text-sm text-muted-foreground">Conte sobre seu negócio — nossa IA vai configurar tudo</p>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 ${
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : 'bg-card border border-border text-foreground rounded-bl-md'
-                }`}>
-                  {/* Message content with basic markdown bold */}
-                  <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                    {msg.content.split(/(\*\*.*?\*\*)/).map((part, j) =>
-                      part.startsWith('**') && part.endsWith('**')
-                        ? <strong key={j}>{part.slice(2, -2)}</strong>
-                        : part
-                    )}
-                  </div>
-
-                  {/* Attachment pills */}
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/30">
-                      {msg.attachments.map((att, j) => (
-                        <span
-                          key={j}
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                            msg.role === 'user'
-                              ? 'bg-primary-foreground/20 text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {att.type === 'file' && <FileText size={12} />}
-                          {att.type === 'image' && <Image size={12} />}
-                          {att.type === 'link' && <Globe size={12} />}
-                          <span className="max-w-[150px] truncate">{att.name}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+        {/* Completed steps badges */}
+        {completedSteps.length > 0 && !isDone && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-wrap justify-center gap-2"
+          >
+            {completedSteps.map(step => (
+              <span key={step} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium">
+                <Check size={12} />
+                {QUESTIONS[step].label}
+              </span>
             ))}
-          </AnimatePresence>
+          </motion.div>
+        )}
 
-          {/* Generating state */}
+        {/* Question */}
+        <AnimatePresence mode="wait">
+          {!isDone && !isGenerating && (
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="text-center"
+            >
+              <h1 className="text-2xl md:text-3xl font-bold leading-relaxed text-foreground whitespace-pre-wrap">
+                {renderMarkdown(QUESTIONS[currentStep].content)}
+              </h1>
+            </motion.div>
+          )}
+
           {isGenerating && (
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
+              key="generating"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center flex flex-col items-center gap-4"
             >
-              <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 size={16} className="animate-spin text-primary" />
-                  <span>Gerando seus agentes personalizados...</span>
-                </div>
+              <div className="w-16 h-16 rounded-2xl bg-gradient-brand flex items-center justify-center">
+                <Loader2 size={28} className="animate-spin text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Criando seus agentes...</h2>
+                <p className="text-muted-foreground">Analisando suas respostas e personalizando tudo para seu negócio</p>
               </div>
             </motion.div>
           )}
 
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Input Area */}
-      {!isDone && (
-        <div className="flex-shrink-0 border-t border-border px-4 py-3 bg-background">
-          <div className="max-w-3xl mx-auto">
-            {/* Attachment pills */}
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {attachments.map((att, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs"
-                  >
-                    {att.type === 'file' && <FileText size={12} />}
-                    {att.type === 'image' && <Image size={12} />}
-                    {att.type === 'link' && <Globe size={12} />}
-                    <span className="max-w-[120px] truncate">{att.name}</span>
-                    <button onClick={() => removeAttachment(i)} className="hover:text-destructive ml-0.5">
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
+          {isDone && !isGenerating && (
+            <motion.div
+              key="done"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center flex flex-col items-center gap-4"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-gradient-brand flex items-center justify-center">
+                <Check size={28} className="text-primary-foreground" />
               </div>
-            )}
-
-            <div className="flex items-end gap-2">
-              {/* Attachment buttons */}
-              <div className="flex gap-1 pb-1">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Anexar arquivo (PDF, DOCX, XLSX)"
-                >
-                  <Paperclip size={18} />
-                </button>
-                <button
-                  onClick={() => imageInputRef.current?.click()}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Anexar foto"
-                >
-                  <Image size={18} />
-                </button>
-                <button
-                  onClick={addLink}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Adicionar link (Instagram, site, etc)"
-                >
-                  <Link2 size={18} />
-                </button>
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Agentes criados com sucesso! ✅</h2>
+                <p className="text-muted-foreground">Redirecionando para o painel...</p>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Input container — Claude style */}
+        {!isDone && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="w-full"
+          >
+            <div className="glass-strong rounded-2xl p-3 shadow-lg border-border/50 relative overflow-hidden">
+              {/* Subtle gradient border effect */}
+              <div className="absolute inset-0 rounded-2xl opacity-20 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(199 89% 48% / 0.1), transparent 40%, hsl(160 84% 50% / 0.1))',
+                }}
+              />
+
+              {/* Attachment pills */}
+              {attachments.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2 px-1 relative z-10">
+                  {attachments.map((att, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs">
+                      {att.type === 'file' && <FileText size={12} />}
+                      {att.type === 'image' && <Image size={12} />}
+                      {att.type === 'link' && <Globe size={12} />}
+                      <span className="max-w-[120px] truncate">{att.name}</span>
+                      <button onClick={() => removeAttachment(i)} className="hover:text-destructive ml-0.5">
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Textarea */}
               <textarea
@@ -342,41 +321,57 @@ export default function OnboardingPage() {
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Digite sua resposta..."
-                rows={1}
-                className="flex-1 resize-none rounded-xl border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 max-h-40"
+                rows={2}
+                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-40 relative z-10"
                 disabled={isGenerating}
               />
 
-              {/* Send button */}
-              <button
-                onClick={sendMessage}
-                disabled={(!inputText.trim() && attachments.length === 0) || isGenerating || isUploading}
-                className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors mb-0.5"
-              >
-                {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-              </button>
+              {/* Bottom bar: attachment buttons + send */}
+              <div className="flex items-center justify-between pt-1 px-1 relative z-10">
+                <div className="flex gap-0.5">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Anexar arquivo"
+                  >
+                    <Paperclip size={18} />
+                  </button>
+                  <button
+                    onClick={() => imageInputRef.current?.click()}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Anexar foto"
+                  >
+                    <Image size={18} />
+                  </button>
+                  <button
+                    onClick={addLink}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Adicionar link"
+                  >
+                    <Link2 size={18} />
+                  </button>
+                </div>
+
+                <button
+                  onClick={sendMessage}
+                  disabled={(!inputText.trim() && attachments.length === 0) || isGenerating || isUploading}
+                  className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                </button>
+              </div>
             </div>
 
-            {/* Hidden file inputs */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.xlsx,.doc,.xls,.csv,.txt"
-              multiple
-              onChange={e => handleFileSelect(e, 'file')}
-              className="hidden"
-            />
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={e => handleFileSelect(e, 'image')}
-              className="hidden"
-            />
-          </div>
-        </div>
-      )}
+            <p className="text-center text-xs text-muted-foreground/50 mt-3">
+              {currentStep + 1} de {totalSteps} · Pressione Enter para enviar
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" accept=".pdf,.docx,.xlsx,.doc,.xls,.csv,.txt" multiple onChange={e => handleFileSelect(e, 'file')} className="hidden" />
+      <input ref={imageInputRef} type="file" accept="image/*" multiple onChange={e => handleFileSelect(e, 'image')} className="hidden" />
     </div>
   );
 }
