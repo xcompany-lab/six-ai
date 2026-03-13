@@ -4,6 +4,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLeads } from '@/hooks/use-leads';
 import { useDashboardStats } from '@/hooks/use-dashboard';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Users, TrendingUp, CalendarCheck, CheckCircle, RotateCcw, Cpu,
   AlertTriangle, Clock, UserPlus, CalendarX, MessageSquare, Loader2,
