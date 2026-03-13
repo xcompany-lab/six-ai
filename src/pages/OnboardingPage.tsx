@@ -696,7 +696,7 @@ export default function OnboardingPage() {
         </AnimatePresence>
 
         {/* Input container — Claude style */}
-        {!isDone && (
+        {!isDone && !pricingStep && !isExtractingServices && currentStep < QUESTIONS.length && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
