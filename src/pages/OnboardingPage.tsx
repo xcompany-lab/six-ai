@@ -153,8 +153,8 @@ export default function OnboardingPage() {
   const totalSteps = QUESTIONS.length;
   const isDone = currentStep >= totalSteps;
 
-  const renderMarkdown = (text: string) =>
-    text.split(/(\*\*.*?\*\*)/).map((part, j) =>
+  const renderMarkdown = (text: string | undefined) =>
+    (text ?? '').split(/(\*\*.*?\*\*)/).map((part, j) =>
       part.startsWith('**') && part.endsWith('**')
         ? <strong key={j} className="text-foreground font-extrabold">{part.slice(2, -2)}</strong>
         : part
