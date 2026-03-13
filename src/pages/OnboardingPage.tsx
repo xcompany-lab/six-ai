@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check } from 'lucide-react';
+import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogoHero from '@/assets/six-logo-hero.png';
 
@@ -45,9 +45,13 @@ export default function OnboardingPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const userResponses = useRef<string[]>([]);
   const allAttachments = useRef<Attachment[]>([]);
 
@@ -99,6 +103,64 @@ export default function OnboardingPage() {
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        setIsTranscribing(true);
+        try {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          const { data, error } = await supabase.functions.invoke('transcribe-onboarding-audio', {
+            body: { audio_base64: base64 },
+          });
+
+          if (error) throw error;
+          if (data?.text) {
+            setInputText(prev => prev ? `${prev} ${data.text}` : data.text);
+          }
+        } catch (err) {
+          console.error('Transcription error:', err);
+          toast.error('Erro ao transcrever áudio. Tente novamente.');
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Mic access error:', err);
+      toast.error('Não foi possível acessar o microfone.');
+    }
   };
 
   const sendMessage = useCallback(async () => {
@@ -350,10 +412,10 @@ export default function OnboardingPage() {
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Digite sua resposta..."
+                placeholder={isRecording ? "Gravando áudio..." : "Digite sua resposta ou use o microfone..."}
                 rows={3}
                 className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
-                disabled={isGenerating}
+                disabled={isGenerating || isRecording}
               />
 
               {/* Bottom bar: attachment buttons + send */}
@@ -380,6 +442,20 @@ export default function OnboardingPage() {
                   >
                     <Link2 size={18} />
                   </button>
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isTranscribing || isGenerating}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isRecording
+                        ? 'text-destructive bg-destructive/10 animate-pulse'
+                        : isTranscribing
+                        ? 'text-muted-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                    title={isRecording ? 'Parar gravação' : isTranscribing ? 'Transcrevendo...' : 'Gravar áudio'}
+                  >
+                    {isTranscribing ? <Loader2 size={18} className="animate-spin" /> : isRecording ? <Square size={18} /> : <Mic size={18} />}
+                  </button>
                 </div>
 
                 <button
@@ -393,7 +469,7 @@ export default function OnboardingPage() {
             </div>
 
             <p className="text-center text-xs text-muted-foreground/50 mt-3">
-              {currentStep + 1} de {totalSteps} · Pressione Enter para enviar
+              {isRecording ? '🔴 Gravando... clique no botão para parar' : isTranscribing ? '⏳ Transcrevendo áudio...' : `${currentStep + 1} de ${totalSteps} · Enter para enviar · 🎙 ou use o microfone`}
             </p>
           </motion.div>
         )}
