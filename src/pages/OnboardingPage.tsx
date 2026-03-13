@@ -442,6 +442,20 @@ export default function OnboardingPage() {
                   >
                     <Link2 size={18} />
                   </button>
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isTranscribing || isGenerating}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isRecording
+                        ? 'text-destructive bg-destructive/10 animate-pulse'
+                        : isTranscribing
+                        ? 'text-muted-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                    title={isRecording ? 'Parar gravação' : isTranscribing ? 'Transcrevendo...' : 'Gravar áudio'}
+                  >
+                    {isTranscribing ? <Loader2 size={18} className="animate-spin" /> : isRecording ? <Square size={18} /> : <Mic size={18} />}
+                  </button>
                 </div>
 
                 <button
