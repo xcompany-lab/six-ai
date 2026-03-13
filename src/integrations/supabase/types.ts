@@ -390,6 +390,41 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          lead_id: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_up_flows: {
         Row: {
           active: boolean
@@ -491,6 +526,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      message_queue: {
+        Row: {
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          id: string
+          instance_name: string
+          is_audio: boolean
+          last_message_at: string
+          lead_id: string | null
+          messages: Json
+          status: string
+          user_id: string
+        }
+        Insert: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          instance_name?: string
+          is_audio?: boolean
+          last_message_at?: string
+          lead_id?: string | null
+          messages?: Json
+          status?: string
+          user_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          instance_name?: string
+          is_audio?: boolean
+          last_message_at?: string
+          lead_id?: string | null
+          messages?: Json
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
