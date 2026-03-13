@@ -460,7 +460,10 @@ serve(async (req) => {
         try {
           if (parsedJson.datetime && parsedJson.service) {
             const dt = new Date(parsedJson.datetime as string);
-            await supabaseAdmin.from("appointments").insert({
+            const durationMinutes = 60;
+            const endDt = new Date(dt.getTime() + durationMinutes * 60000);
+
+            const { data: newAppointment } = await supabaseAdmin.from("appointments").insert({
               user_id: userId,
               lead_id: lead.id,
               lead_name: (parsedJson.contact_name as string) || contactName,
@@ -468,8 +471,39 @@ serve(async (req) => {
               date: dt.toISOString().split("T")[0],
               time: dt.toTimeString().slice(0, 5),
               status: "confirmed",
-            });
+            }).select("id").single();
             console.log("Appointment created from intent");
+
+            // Try to create Google Calendar event
+            try {
+              const calendarRes = await fetch(
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/create-calendar-event`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  },
+                  body: JSON.stringify({
+                    user_id: userId,
+                    appointment_id: newAppointment?.id,
+                    summary: `${(parsedJson.contact_name as string) || contactName} — ${parsedJson.service}`,
+                    description: `Agendado via SIX AI\nContato: ${contactPhone}`,
+                    start_datetime: dt.toISOString(),
+                    end_datetime: endDt.toISOString(),
+                    timezone: "America/Sao_Paulo",
+                  }),
+                }
+              );
+              const calResult = await calendarRes.json();
+              if (calendarRes.ok) {
+                console.log("Google Calendar event created:", calResult.google_event_id);
+              } else {
+                console.log("Google Calendar not available:", calResult.error);
+              }
+            } catch (calErr) {
+              console.warn("Google Calendar integration error (non-fatal):", calErr);
+            }
           }
         } catch (e) {
           console.error("Error creating appointment:", e);
