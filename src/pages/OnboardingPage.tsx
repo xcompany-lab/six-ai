@@ -274,7 +274,7 @@ export default function OnboardingPage() {
                 <Check size={28} className="text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Agentes criados com sucesso! ✅</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Agentes criados com sucesso!</h2>
                 <p className="text-muted-foreground">Redirecionando para o painel...</p>
               </div>
             </motion.div>
