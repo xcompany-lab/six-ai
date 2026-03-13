@@ -1,9 +1,49 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { Bot, Save, MessageSquare, Brain, Shield, BookOpen, Mic, AlertCircle, Loader2, Users, Trash2 } from 'lucide-react';
+import { Bot, Save, MessageSquare, Brain, Shield, BookOpen, Mic, AlertCircle, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAIAgentConfig, useSaveAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
+
+interface FieldTextAreaProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  rows?: number;
+}
+
+const FieldTextArea = ({ label, value, onChange, placeholder, rows = 4 }: FieldTextAreaProps) => (
+  <div>
+    <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={rows}
+      className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-mono text-sm"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
+interface FieldInputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}
+
+const FieldInput = ({ label, value, onChange, placeholder }: FieldInputProps) => (
+  <div>
+    <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+      placeholder={placeholder}
+    />
+  </div>
+);
 
 export default function AIAgentPage() {
   const { data: savedConfig, isLoading } = useAIAgentConfig();
@@ -63,30 +103,7 @@ export default function AIAgentPage() {
     }
   };
 
-  const TextArea = ({ label, field, placeholder, rows = 4 }: { label: string; field: string; placeholder: string; rows?: number }) => (
-    <div>
-      <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
-      <textarea
-        value={(config as any)[field]}
-        onChange={(e) => setConfig(c => ({ ...c, [field]: e.target.value }))}
-        rows={rows}
-        className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-mono text-sm"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  const Input = ({ label, field, placeholder }: { label: string; field: string; placeholder: string }) => (
-    <div>
-      <label className="text-sm font-medium text-foreground mb-1.5 block">{label}</label>
-      <input
-        value={(config as any)[field]}
-        onChange={(e) => setConfig(c => ({ ...c, [field]: e.target.value }))}
-        className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-        placeholder={placeholder}
-      />
-    </div>
-  );
+  const update = (field: string) => (value: string) => setConfig(c => ({ ...c, [field]: value }));
 
   if (isLoading) {
     return (
@@ -143,31 +160,31 @@ export default function AIAgentPage() {
       <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-xl p-6 space-y-5">
         {activeTab === 'prompt' && (
           <>
-            <TextArea label="Prompt Principal" field="prompt" placeholder="Instruções principais do agente..." rows={8} />
+            <FieldTextArea label="Prompt Principal" value={config.prompt} onChange={update('prompt')} placeholder="Instruções principais do agente..." rows={8} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input label="Tom de Voz" field="voice_tone" placeholder="Ex: Profissional e empático" />
-              <Input label="Energia" field="energy" placeholder="Ex: Moderada, Alta, Suave" />
+              <FieldInput label="Tom de Voz" value={config.voice_tone} onChange={update('voice_tone')} placeholder="Ex: Profissional e empático" />
+              <FieldInput label="Energia" value={config.energy} onChange={update('energy')} placeholder="Ex: Moderada, Alta, Suave" />
             </div>
           </>
         )}
         {activeTab === 'behavior' && (
           <>
-            <Input label="Palavras Proibidas (separadas por vírgula)" field="prohibited_words" placeholder="concorrente, barato..." />
-            <TextArea label="Comportamento Fora do Escopo" field="out_of_scope" placeholder="O que fazer quando receber algo fora do escopo..." />
+            <FieldInput label="Palavras Proibidas (separadas por vírgula)" value={config.prohibited_words} onChange={update('prohibited_words')} placeholder="concorrente, barato..." />
+            <FieldTextArea label="Comportamento Fora do Escopo" value={config.out_of_scope} onChange={update('out_of_scope')} placeholder="O que fazer quando receber algo fora do escopo..." />
           </>
         )}
         {activeTab === 'knowledge' && (
           <>
-            <TextArea label="FAQ" field="faq" placeholder="Perguntas e respostas frequentes..." rows={6} />
-            <TextArea label="Base de Conhecimento" field="knowledge_base" placeholder="Informações sobre serviços, preços, procedimentos..." rows={6} />
-            <TextArea label="Pitch Principal" field="pitch" placeholder="Como apresentar sua oferta..." />
-            <TextArea label="Tratamento de Objeções" field="objections" placeholder="Como lidar com objeções comuns..." />
+            <FieldTextArea label="FAQ" value={config.faq} onChange={update('faq')} placeholder="Perguntas e respostas frequentes..." rows={6} />
+            <FieldTextArea label="Base de Conhecimento" value={config.knowledge_base} onChange={update('knowledge_base')} placeholder="Informações sobre serviços, preços, procedimentos..." rows={6} />
+            <FieldTextArea label="Pitch Principal" value={config.pitch} onChange={update('pitch')} placeholder="Como apresentar sua oferta..." />
+            <FieldTextArea label="Tratamento de Objeções" value={config.objections} onChange={update('objections')} placeholder="Como lidar com objeções comuns..." />
           </>
         )}
         {activeTab === 'messages' && (
           <>
-            <TextArea label="Mensagem de Abertura" field="opening_message" placeholder="Primeira mensagem do agente..." />
-            <TextArea label="Mensagem de Fallback" field="fallback_message" placeholder="Quando não entender..." />
+            <FieldTextArea label="Mensagem de Abertura" value={config.opening_message} onChange={update('opening_message')} placeholder="Primeira mensagem do agente..." />
+            <FieldTextArea label="Mensagem de Fallback" value={config.fallback_message} onChange={update('fallback_message')} placeholder="Quando não entender..." />
           </>
         )}
         {activeTab === 'memory' && (
