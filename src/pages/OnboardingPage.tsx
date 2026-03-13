@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                     <Image size={18} />
                   </button>
                   <button
-                    onClick={addLink}
+                    onClick={() => setShowLinkInput(true)}
                     className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                     title="Adicionar link"
                   >
