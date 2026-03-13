@@ -132,13 +132,47 @@ export default function AIAgentPage() {
                   })}
                 </div>
                 <AnimatePresence>
-                  {agentConfigs.map(ac => expandedAgent === ac.id && ac.system_prompt ? (
+                  {agentConfigs.map(ac => expandedAgent === ac.id ? (
                     <motion.div key={`prompt-${ac.id}`}
                       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden">
-                      <ScrollArea className="max-h-[400px] rounded-lg border border-border bg-secondary/30 p-4">
-                        <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt}</pre>
-                      </ScrollArea>
+                      <div className="rounded-lg border border-border bg-secondary/30">
+                        <ScrollArea className="max-h-[400px] p-4">
+                          <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt || 'Prompt vazio'}</pre>
+                        </ScrollArea>
+                        <div className="border-t border-border p-3">
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!refineInput.trim() || refinePrompt.isPending) return;
+                            const instruction = refineInput.trim();
+                            setRefineInput('');
+                            refinePrompt.mutate({
+                              agentConfigId: ac.id,
+                              currentPrompt: ac.system_prompt || '',
+                              userInstruction: instruction,
+                              agentType: ac.agent_type,
+                            }, {
+                              onSuccess: () => {
+                                toast({ title: 'Prompt atualizado', description: 'O agente foi refinado com suas instruções.' });
+                              },
+                              onError: () => {
+                                toast({ title: 'Erro ao refinar', description: 'Tente novamente.', variant: 'destructive' });
+                              },
+                            });
+                          }} className="flex items-center gap-2">
+                            <Input
+                              placeholder="O que você quer alterar ou incrementar nesse agente?"
+                              value={refineInput}
+                              onChange={e => setRefineInput(e.target.value)}
+                              disabled={refinePrompt.isPending}
+                              className="flex-1 text-sm"
+                            />
+                            <Button type="submit" size="icon" disabled={!refineInput.trim() || refinePrompt.isPending} className="shrink-0">
+                              {refinePrompt.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                            </Button>
+                          </form>
+                        </div>
+                      </div>
                     </motion.div>
                   ) : null)}
                 </AnimatePresence>
