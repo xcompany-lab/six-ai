@@ -10,7 +10,7 @@ serve(async (req) => {
 
     if (error) {
       console.error("Google OAuth error:", error);
-      return Response.redirect("https://six-ai.lovable.app/settings?google=error");
+      return Response.redirect("https://usesix.com.br/app/configuracoes?google=error");
     }
 
     if (!code || !state) {
