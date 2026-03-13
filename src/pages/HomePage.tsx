@@ -49,7 +49,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section className="relative pt-24 pb-20 lg:pt-28 lg:pb-32 px-4 sm:px-6">
+      <section className="relative pt-20 pb-12 sm:pb-20 lg:pt-28 lg:pb-32 px-4 sm:px-6">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
@@ -57,26 +57,26 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-4 mb-8">
-              <img src={sixLogo} alt="SIX AI" className="h-44 sm:h-52 lg:h-60" />
+            <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-2 sm:gap-4 mb-4 sm:mb-8">
+              <img src={sixLogo} alt="SIX AI" className="h-20 sm:h-52 lg:h-60" />
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="badge-gradient-brand">Smart Interaction eXperience</span>
               </div>
             </motion.div>
 
-            <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-6">
+            <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-3 sm:mb-6">
               Transforme seu WhatsApp em um{' '}
               <span className="text-gradient-brand">sistema automático de vendas</span>{' '}
               com IA
             </motion.h1>
 
-            <motion.p variants={fadeUp} custom={2} className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            <motion.p variants={fadeUp} custom={2} className="text-sm sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-4 sm:mb-8">
               Atenda leads automaticamente, agende consultas, recupere contatos perdidos e aumente seu faturamento com o SIX AI.
             </motion.p>
 
             {/* Bullet points */}
-            <motion.div variants={fadeUp} custom={3} className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground mb-10">
+            <motion.div variants={fadeUp} custom={3} className="hidden sm:flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground mb-10">
               {[
                 'Atendente com Inteligência Artificial',
                 'Agendamentos automáticos',
