@@ -49,11 +49,6 @@ export default function AIAgentPage() {
         </div>
       </motion.div>
 
-      {/* Media limitation */}
-      <div className="glass rounded-xl p-4 mb-6 flex items-center gap-3 border-warning/20">
-        <AlertCircle size={16} className="text-warning flex-shrink-0" />
-        <p className="text-sm text-muted-foreground">Na v1, imagens e arquivos não são interpretados. O agente informa educadamente a limitação.</p>
-      </div>
 
       {!profile ? (
         /* Onboarding banner */
