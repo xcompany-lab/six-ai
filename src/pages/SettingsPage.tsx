@@ -32,6 +32,23 @@ export default function SettingsPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [checkingGoogle, setCheckingGoogle] = useState(true);
 
+  // Admin check
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      setIsAdmin(!!data);
+    }
+    checkAdmin();
+  }, [user]);
+
   // Branding state
   const [brandName, setBrandName] = useState(profile?.brand_name || '');
   const [businessDesc, setBusinessDesc] = useState(profile?.business_description || '');
