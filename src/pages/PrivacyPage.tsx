@@ -49,6 +49,13 @@ const sections: LegalSection[] = [
           <li>Dados de instância WhatsApp (via Evolution API)</li>
           <li>Memória de contato: resumo de interações, sentimento e preferências</li>
         </ul>
+        <h3 className="text-foreground font-semibold mt-4 mb-2">Dados de Integração Google</h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Token de acesso e refresh token do Google Calendar, obtidos via autorização OAuth 2.0 explícita do Usuário</li>
+          <li>Escopo solicitado: <code className="text-foreground bg-muted px-1 rounded">calendar.events</code> — permite apenas leitura e escrita de eventos na Google Agenda</li>
+          <li>Dados <strong className="text-foreground">NÃO</strong> acessados: e-mails (Gmail), contatos (Google Contacts), arquivos (Google Drive) ou qualquer outro dado da conta Google do Usuário</li>
+          <li>Os tokens são armazenados de forma criptografada com isolamento por usuário (Row Level Security)</li>
+        </ul>
       </>
     ),
   },
