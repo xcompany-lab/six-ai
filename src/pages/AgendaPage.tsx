@@ -79,6 +79,13 @@ export default function AgendaPage() {
       <PageHeader title="Agenda Integrada" subtitle="Visualize e gerencie sua agenda">
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all"
+          >
+            <Settings size={14} />
+            Configurações
+          </button>
+          <button
             onClick={handleManualSync}
             disabled={syncGoogle.isPending}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
