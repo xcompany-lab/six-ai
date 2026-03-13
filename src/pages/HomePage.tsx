@@ -405,11 +405,11 @@ export default function HomePage() {
               Teste o SIX AI gratuitamente por 5 dias e veja como a inteligência artificial pode transformar seu WhatsApp em um sistema automático de vendas.
             </motion.p>
             <motion.div variants={fadeUp} custom={2}>
-              <Button size="lg" className="bg-gradient-brand text-primary-foreground px-10 h-14 text-lg glow-blue" asChild>
-                <a href={trialUrl} target="_blank" rel="noopener noreferrer">
-                  Começar Teste Gratuito <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
-              </Button>
+              <a href={trialUrl} target="_blank" rel="noopener noreferrer" className="cyber-btn cyber-btn-primary text-lg">
+                <span className="cyber-btn-inner px-10 h-14">
+                  Começar Teste Gratuito <ArrowRight className="ml-2 h-5 w-5 inline" />
+                </span>
+              </a>
             </motion.div>
           </motion.div>
         </div>
