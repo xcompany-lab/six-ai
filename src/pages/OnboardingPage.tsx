@@ -256,6 +256,11 @@ export default function OnboardingPage() {
     } else {
       setCurrentStep(nextStep);
       setIsGenerating(true);
+      setLoadingStage(0);
+
+      // Animate loading stages
+      const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
+      const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
 
       try {
         const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
@@ -272,10 +277,15 @@ export default function OnboardingPage() {
         });
 
         if (error) throw error;
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
         await refreshProfile();
-        setTimeout(() => navigate('/app', { replace: true }), 2000);
+        toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
+        setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
       } catch (err) {
         console.error('Generation error:', err);
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
         setIsGenerating(false);
         toast.error('Erro ao gerar agentes. Tente novamente.');
         setCurrentStep(QUESTIONS.length - 1);
