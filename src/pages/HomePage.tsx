@@ -419,8 +419,7 @@ export default function HomePage() {
       <footer className="border-t border-border py-10 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-bold">SIX <span className="text-primary">AI</span></span>
+            <img src={sixLogo} alt="SIX AI" className="h-6" />
           </div>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Sem taxa de implementação</span>
