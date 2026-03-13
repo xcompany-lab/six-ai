@@ -160,10 +160,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaving(true);
-    await updateProfile({
-      ...form,
-      services: form.services.split(',').map(s => s.trim()).filter(Boolean),
-    });
+    await updateProfile(form);
     setSaving(false);
     toast.success('Perfil atualizado com sucesso!');
   };
