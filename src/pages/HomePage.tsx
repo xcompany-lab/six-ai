@@ -213,8 +213,9 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger} className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-accent/5 text-accent text-xs font-medium mb-6">
-                <Sparkles className="h-3.5 w-3.5" /> Exclusivo do Plano Pro
+              <motion.div variants={fadeUp} className="flex items-center gap-2 mb-6">
+                <Sparkles className="h-3.5 w-3.5 text-accent" />
+                <span className="badge-gradient-accent">Exclusivo do Plano Pro</span>
               </motion.div>
               <motion.h2 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl font-bold mb-6">
                 Uma IA estratégica <span className="text-gradient-brand">analisando seu negócio</span>
