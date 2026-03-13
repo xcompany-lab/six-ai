@@ -24,10 +24,12 @@ const PAYMENT_OPTIONS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Di
 export default function AIAgentPage() {
   const navigate = useNavigate();
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+  const [refineInput, setRefineInput] = useState('');
   const { data: profile, isLoading: loadingProfile } = useBusinessProfile();
   const { data: agentConfig, isLoading: loadingConfig } = useAIAgentConfig();
   const { data: agentConfigs = [] } = useAgentConfigs();
   const { data: memories = [] } = useContactMemories();
+  const refinePrompt = useRefineAgentPrompt();
 
   const isActive = agentConfig?.active ?? true;
 
