@@ -49,7 +49,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section className="relative pt-20 pb-12 sm:pb-20 lg:pt-28 lg:pb-32 px-4 sm:px-6">
+      <section className="relative pt-20 pb-12 sm:pb-16 lg:pt-24 lg:pb-20 px-4 sm:px-6">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
