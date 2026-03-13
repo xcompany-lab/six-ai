@@ -19,7 +19,7 @@ interface Attachment {
 const QUESTIONS: { label: string; content: string }[] = [
   {
     label: 'Sobre o negócio',
-    content: "Olá! 👋 Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
+    content: "Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
   },
   {
     label: 'Objeções',
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
   const renderMarkdown = (text: string) =>
     text.split(/(\*\*.*?\*\*)/).map((part, j) =>
       part.startsWith('**') && part.endsWith('**')
-        ? <strong key={j} className="text-foreground">{part.slice(2, -2)}</strong>
+        ? <strong key={j} className="text-foreground font-extrabold">{part.slice(2, -2)}</strong>
         : part
     );
 
@@ -181,7 +181,7 @@ export default function OnboardingPage() {
       />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-8">
         {/* Logo */}
         <motion.img
           src={sixLogoHero}
@@ -240,7 +240,7 @@ export default function OnboardingPage() {
               transition={{ duration: 0.4 }}
               className="text-center"
             >
-              <h1 className="text-2xl md:text-3xl font-bold leading-relaxed text-foreground whitespace-pre-wrap">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-relaxed whitespace-pre-wrap text-gradient-glow">
                 {renderMarkdown(QUESTIONS[currentStep].content)}
               </h1>
             </motion.div>
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
                 <Check size={28} className="text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Agentes criados com sucesso! ✅</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Agentes criados com sucesso!</h2>
                 <p className="text-muted-foreground">Redirecionando para o painel...</p>
               </div>
             </motion.div>
@@ -321,8 +321,8 @@ export default function OnboardingPage() {
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Digite sua resposta..."
-                rows={2}
-                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-40 relative z-10"
+                rows={3}
+                className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
                 disabled={isGenerating}
               />
 
