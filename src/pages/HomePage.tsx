@@ -49,7 +49,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section className="relative pt-20 pb-12 sm:pb-20 lg:pt-28 lg:pb-32 px-4 sm:px-6">
+      <section className="relative pt-20 pb-12 sm:pb-16 lg:pt-24 lg:pb-20 px-4 sm:px-6">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
@@ -57,8 +57,8 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-2 sm:gap-4 mb-4 sm:mb-8">
-              <img src={sixLogo} alt="SIX AI" className="h-20 sm:h-52 lg:h-60" />
+            <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <img src={sixLogo} alt="SIX AI" className="h-20 sm:h-32 lg:h-36" />
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="badge-gradient-brand">Smart Interaction eXperience</span>
@@ -352,7 +352,7 @@ export default function HomePage() {
                     href={PLAN_FEATURES[plan.key].checkoutUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`cyber-btn w-full ${plan.highlighted ? 'cyber-btn-primary' : 'cyber-btn-outline'}`}
+                    className="cyber-btn w-full cyber-btn-primary"
                   >
                     <span className="cyber-btn-inner w-full justify-center">
                       {plan.cta}
