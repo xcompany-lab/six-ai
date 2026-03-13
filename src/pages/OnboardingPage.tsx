@@ -443,15 +443,16 @@ export default function OnboardingPage() {
             <div key={i} className="flex items-center gap-3">
               <div
                 className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                  completedSteps.includes(i) ? 'bg-accent w-2.5 h-2.5' :
-                  i === currentStep && !isDone ? 'bg-primary animate-pulse w-3 h-3' :
-                  isDone ? 'bg-accent w-2.5 h-2.5' :
+                  completedSteps.includes(i) || (i < QUESTIONS.length && currentStep > i) ? 'bg-accent w-2.5 h-2.5' :
+                  (i < QUESTIONS.length && i === currentStep && !pricingStep) ? 'bg-primary animate-pulse w-3 h-3' :
+                  (i === QUESTIONS.length && pricingStep) ? 'bg-primary animate-pulse w-3 h-3' :
+                  (isDone || isGenerating) ? 'bg-accent w-2.5 h-2.5' :
                   'bg-muted-foreground/30'
                 }`}
               />
               {i < totalSteps - 1 && (
                 <div className={`w-8 h-px transition-colors duration-500 ${
-                  completedSteps.includes(i) ? 'bg-accent/50' : 'bg-border'
+                  completedSteps.includes(i) || currentStep > i ? 'bg-accent/50' : 'bg-border'
                 }`} />
               )}
             </div>
