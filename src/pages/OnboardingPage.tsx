@@ -244,8 +244,13 @@ export default function OnboardingPage() {
               className="text-center"
             >
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-relaxed whitespace-pre-wrap text-gradient-glow">
-                {renderMarkdown(QUESTIONS[currentStep].content)}
+                {renderMarkdown(QUESTIONS[currentStep].headline)}
               </h1>
+              {QUESTIONS[currentStep].subtitle && (
+                <p className="mt-6 text-base md:text-lg text-muted-foreground whitespace-pre-wrap leading-relaxed max-w-2xl mx-auto">
+                  {QUESTIONS[currentStep].subtitle}
+                </p>
+              )}
             </motion.div>
           )}
 
