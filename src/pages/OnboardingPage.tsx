@@ -88,11 +88,13 @@ export default function OnboardingPage() {
     e.target.value = '';
   };
 
-  const addLink = () => {
-    const url = prompt('Cole o link (Instagram, site, etc):');
-    if (url && url.trim()) {
-      setAttachments(prev => [...prev, { type: 'link', name: url.trim(), url: url.trim() }]);
+  const confirmLink = () => {
+    const url = linkInputValue.trim();
+    if (url) {
+      setAttachments(prev => [...prev, { type: 'link', name: url, url }]);
     }
+    setLinkInputValue('');
+    setShowLinkInput(false);
   };
 
   const removeAttachment = (index: number) => {
