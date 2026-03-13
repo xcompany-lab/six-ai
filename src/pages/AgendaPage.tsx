@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAppointmentsByDateRange, Appointment, useSyncGoogleCalendar } from '@/hooks/use-appointments';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw, Settings } from 'lucide-react';
+import { SchedulingSettings } from '@/components/agenda/SchedulingSettings';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,7 @@ const statusLabels: Record<string, string> = {
 export default function AgendaPage() {
   const [view, setView] = useState<ViewType>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { toast } = useToast();
   const syncGoogle = useSyncGoogleCalendar();
 
@@ -77,6 +79,13 @@ export default function AgendaPage() {
       <PageHeader title="Agenda Integrada" subtitle="Visualize e gerencie sua agenda">
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all"
+          >
+            <Settings size={14} />
+            Configurações
+          </button>
+          <button
             onClick={handleManualSync}
             disabled={syncGoogle.isPending}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
@@ -119,6 +128,8 @@ export default function AgendaPage() {
       ) : (
         <MonthView appointments={appointments || []} currentDate={currentDate} onSelectDay={(d) => { setCurrentDate(d); setView('day'); }} />
       )}
+
+      <SchedulingSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }
