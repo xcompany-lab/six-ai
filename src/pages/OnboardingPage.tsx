@@ -475,9 +475,9 @@ export default function OnboardingPage() {
           </motion.div>
         )}
 
-        {/* Question */}
+        {/* Question / Pricing / Loading */}
         <AnimatePresence mode="wait">
-          {!isDone && !isGenerating && (
+          {!isDone && !isGenerating && !pricingStep && !isExtractingServices && currentStep < QUESTIONS.length && (
             <motion.div
               key={currentStep}
               initial={{ opacity: 0, y: 20 }}
@@ -494,6 +494,142 @@ export default function OnboardingPage() {
                   {QUESTIONS[currentStep].subtitle}
                 </p>
               )}
+            </motion.div>
+          )}
+
+          {isExtractingServices && (
+            <motion.div
+              key="extracting"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center flex flex-col items-center gap-4"
+            >
+              <Loader2 size={32} className="animate-spin text-primary" />
+              <p className="text-muted-foreground">Identificando seus serviços...</p>
+            </motion.div>
+          )}
+
+          {pricingStep && !isGenerating && (
+            <motion.div
+              key="pricing"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-3xl"
+            >
+              <div className="text-center mb-8">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gradient-glow">
+                  Identifiquei esses serviços. Pode me dizer os valores?
+                </h1>
+                <p className="mt-3 text-sm md:text-base text-muted-foreground">
+                  Se algum serviço estiver faltando, adicione abaixo. Deixe o valor em branco se preferir não informar.
+                </p>
+              </div>
+
+              {/* Service cards */}
+              <div className="space-y-3 mb-6">
+                {extractedServices.map((service, i) => (
+                  <div key={i} className="glass-strong rounded-xl p-4 border border-border/50 flex flex-col sm:flex-row gap-3">
+                    <input
+                      value={service.name}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], name: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="Nome do serviço"
+                      className="flex-1 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <input
+                      value={service.price}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], price: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="R$ 0,00"
+                      className="w-full sm:w-32 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <input
+                      value={service.notes}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], notes: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="Obs. (opcional)"
+                      className="w-full sm:w-40 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <button
+                      onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
+                      className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() => setExtractedServices(prev => [...prev, { name: '', price: '', notes: '' }])}
+                  className="w-full rounded-xl border border-dashed border-border/50 py-3 text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus size={16} /> Adicionar serviço
+                </button>
+              </div>
+
+              {/* Payment methods */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-foreground mb-3">Formas de pagamento aceitas</p>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_METHODS.map(method => (
+                    <button
+                      key={method}
+                      onClick={() => setSelectedPayments(prev =>
+                        prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
+                      )}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        selectedPayments.includes(method)
+                          ? 'bg-primary/15 border-primary/40 text-primary'
+                          : 'bg-transparent border-border/50 text-muted-foreground hover:border-primary/30'
+                      }`}
+                    >
+                      {method}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plans / packages */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-foreground mb-2">Planos ou pacotes (opcional)</p>
+                <textarea
+                  value={plansText}
+                  onChange={e => setPlansText(e.target.value)}
+                  placeholder="Ex: Pacote 5 sessões com 10% de desconto, Plano mensal ilimitado R$ 299..."
+                  rows={3}
+                  className="w-full resize-none glass-strong rounded-xl border border-border/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setPricingStep(false);
+                    triggerGeneration();
+                  }}
+                  className="px-6 py-2.5 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                >
+                  Pular
+                </button>
+                <button
+                  onClick={confirmPricing}
+                  className="px-8 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors"
+                >
+                  Confirmar e gerar agentes
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -530,7 +666,6 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
-              {/* Indeterminate progress bar */}
               <div className="w-48 h-1 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-gradient-brand"
@@ -542,7 +677,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {isDone && !isGenerating && (
+          {isDone && !isGenerating && !pricingStep && (
             <motion.div
               key="done"
               initial={{ opacity: 0, scale: 0.95 }}
