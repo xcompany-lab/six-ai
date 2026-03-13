@@ -83,6 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        if (event === 'SIGNED_IN') {
+          setIsLoading(true);
+        }
+
         setSession(newSession);
         if (newSession?.user) {
           fetchProfile(newSession.user.id).finally(() => {
