@@ -34,6 +34,12 @@ const QUESTIONS: { label: string; headline: string; subtitle?: string }[] = [
   },
 ];
 
+const LOADING_STAGES = [
+  'Analisando suas respostas...',
+  'Construindo perfil do negócio...',
+  'Gerando seus 4 agentes de IA...',
+];
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
@@ -47,6 +53,7 @@ export default function OnboardingPage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
