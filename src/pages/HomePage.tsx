@@ -392,8 +392,61 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* GOOGLE INTEGRATION & DATA USAGE */}
+      <section id="integracoes" className="py-20 lg:py-28 px-4 sm:px-6 bg-gradient-surface">
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}>
+            <motion.div variants={fadeUp} className="flex items-center justify-center gap-2 mb-6">
+              <Shield className="h-5 w-5 text-accent" />
+              <span className="badge-gradient-accent">Transparência e Segurança</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl font-bold text-center mb-4">
+              Integrações e <span className="text-gradient-brand">Uso de Dados Google</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-center max-w-3xl mx-auto mb-12">
+              O SIX AI se integra ao <strong className="text-foreground">Google Agenda</strong> para automatizar a criação e sincronização de agendamentos diretamente na sua agenda. Veja como seus dados são tratados:
+            </motion.p>
+
+            <motion.div variants={fadeUp} custom={3} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              {[
+                {
+                  icon: Calendar,
+                  title: 'Escopo limitado',
+                  desc: 'Solicitamos acesso apenas ao escopo calendar.events — leitura e escrita de eventos na sua Google Agenda. Não acessamos e-mails, contatos, arquivos ou qualquer outro dado da sua conta Google.',
+                },
+                {
+                  icon: Shield,
+                  title: 'Armazenamento seguro',
+                  desc: 'Os tokens de acesso e refresh do Google são armazenados de forma criptografada no banco de dados, com isolamento por usuário (Row Level Security) e nunca são compartilhados com terceiros.',
+                },
+                {
+                  icon: Star,
+                  title: 'Controle total',
+                  desc: 'Você pode desconectar o Google Agenda a qualquer momento nas Configurações da plataforma. Ao desconectar, os tokens são removidos e o acesso é revogado imediatamente.',
+                },
+              ].map(({ icon: Icon, title, desc }, i) => (
+                <motion.div key={title} variants={fadeUp} custom={i} className="p-6 rounded-2xl glass">
+                  <div className="mb-4">
+                    <CyberIcon icon={Icon} variant="cyan" size="md" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.p variants={fadeUp} custom={4} className="text-sm text-muted-foreground text-center">
+              Para mais detalhes sobre como tratamos seus dados, consulte nossa{' '}
+              <a href="/privacidade" className="text-primary hover:underline">Política de Privacidade</a>.
+              {' '}O uso da integração com Google Agenda está sujeito aos nossos{' '}
+              <a href="/termos" className="text-primary hover:underline">Termos de Uso</a>.
+            </motion.p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
-      <section className="py-20 lg:py-28 px-4 sm:px-6 bg-gradient-surface">
+      <section className="py-20 lg:py-28 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}>
             <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-bold mb-6">

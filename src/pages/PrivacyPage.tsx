@@ -144,6 +144,7 @@ const sections: LegalSection[] = [
           <li><strong className="text-foreground">Informação:</strong> ser informado sobre as entidades com as quais os dados são compartilhados.</li>
         </ul>
         <p>Para exercer seus direitos, entre em contato pelo e-mail <span className="text-foreground">contato@xcompanytech.com</span> ou através do módulo de Suporte na Plataforma.</p>
+        <p className="mt-2"><strong className="text-foreground">Integração Google:</strong> o Usuário pode desconectar a integração com Google Agenda a qualquer momento através da página de Configurações da Plataforma. Ao desconectar, os tokens de acesso são imediatamente removidos e o acesso à Google Agenda é revogado.</p>
       </>
     ),
   },
