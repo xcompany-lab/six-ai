@@ -105,13 +105,8 @@ async function sendSplitMessages(phone: string, messages: string[], instanceName
 // === Parse AI response ===
 
 function parseAIResponse(rawReply: string): { messages: string[]; intent: string | null; parsedJson: Record<string, unknown> | null } {
-  // Handle empty/whitespace-only replies
   if (!rawReply || !rawReply.trim()) {
-    return {
-      messages: ["Deixa eu verificar isso e já te respondo! 😊"],
-      intent: null,
-      parsedJson: null,
-    };
+    return { messages: ["Deixa eu verificar isso e já te respondo! 😊"], intent: null, parsedJson: null };
   }
 
   let messages: string[] = [];
@@ -127,13 +122,35 @@ function parseAIResponse(rawReply: string): { messages: string[]; intent: string
         messages = parsed.messages.filter((m: unknown) => typeof m === "string" && (m as string).trim().length > 0);
       }
       intent = parsed.intent || null;
+
+      // Handle intent-only responses (no messages array)
+      if (messages.length === 0 && intent) {
+        if (intent === "booked" && parsed.service) {
+          const name = parsed.contact_name || "";
+          const service = parsed.service || "";
+          const dt = parsed.datetime ? new Date(parsed.datetime as string) : null;
+          if (dt) {
+            const day = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "America/Sao_Paulo" });
+            const time = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+            messages = [
+              `Pronto${name ? `, ${name}` : ""}! Agendei seu horário de ${service}.`,
+              `Fica pra ${day} às ${time}. Te espero! 😊`,
+            ];
+          } else {
+            messages = [`Pronto! Agendei seu horário de ${service}. Te espero! 😊`];
+          }
+        } else if (intent === "schedule") {
+          messages = ["Vou te direcionar para o agendamento!"];
+        } else if (intent === "human_handoff") {
+          messages = ["Vou encaminhar você para nossa equipe. Em breve retornamos!"];
+        }
+      }
     }
   } catch {
     console.log("Could not parse JSON, using as plain text");
   }
 
   if (messages.length === 0) {
-    // Clean markdown artifacts
     const cleaned = rawReply.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     messages = cleaned
       .split(/\n\n|\n/)
