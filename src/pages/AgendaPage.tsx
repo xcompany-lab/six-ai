@@ -140,6 +140,7 @@ function DayView({ appointments, date }: { appointments: Appointment[]; date: Da
               <div className="flex-1">
                 <p className="font-medium text-foreground">{a.lead_name}</p>
                 <p className="text-sm text-muted-foreground">{a.service} · {a.duration_minutes}min</p>
+                {a.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.notes}</p>}
               </div>
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[a.status] || ''}`}>
                 {statusLabels[a.status] || a.status}
@@ -172,6 +173,7 @@ function WeekView({ appointments, currentDate }: { appointments: Appointment[]; 
                 <div key={a.id} className={`p-2 rounded-lg text-xs border ${statusColors[a.status] || 'bg-secondary/50'}`}>
                   <p className="font-medium truncate">{a.time?.slice(0, 5)} {a.lead_name}</p>
                   <p className="text-muted-foreground truncate">{a.service}</p>
+                  {a.notes && <p className="text-muted-foreground truncate opacity-70">{a.notes}</p>}
                 </div>
               ))}
             </div>
