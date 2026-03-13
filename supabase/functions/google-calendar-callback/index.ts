@@ -81,7 +81,7 @@ serve(async (req) => {
     }
 
     console.log(`Google Calendar connected for user ${state}`);
-    return Response.redirect("https://six-ai.lovable.app/settings?google=connected");
+    return Response.redirect("https://usesix.com.br/app/configuracoes?google=connected");
   } catch (e) {
     console.error("Google callback error:", e);
     return Response.redirect("https://six-ai.lovable.app/settings?google=error");
