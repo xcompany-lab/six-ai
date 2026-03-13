@@ -40,6 +40,8 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [inputText, setInputText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkInputValue, setLinkInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
