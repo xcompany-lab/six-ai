@@ -16,18 +16,21 @@ interface Attachment {
 }
 
 // Hardcoded orchestrator questions
-const QUESTIONS: { label: string; content: string }[] = [
+const QUESTIONS: { label: string; headline: string; subtitle?: string }[] = [
   {
     label: 'Sobre o negócio',
-    content: "Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
+    headline: "Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre o seu negócio...**",
+    subtitle: "O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
   },
   {
     label: 'Objeções',
-    content: "**Qual é a maior objeção que seus clientes têm antes de fechar?**\n\nE como você costuma responder quando isso acontece?\n\nSe tiver mais de uma objeção, pode listar todas!",
+    headline: "**Qual é a maior objeção que seus clientes têm antes de fechar?**",
+    subtitle: "E como você costuma responder quando isso acontece?\n\nSe tiver mais de uma objeção, pode listar todas!",
   },
   {
     label: 'Tom e objetivo',
-    content: "**Como você prefere que a IA se comunique com seus clientes?**\n\nMais formal, descontraída, direta?\n\nE qual é o **resultado mais importante** que você quer alcançar com a automação?",
+    headline: "**Como você prefere que a IA se comunique com seus clientes?**",
+    subtitle: "Mais formal, descontraída, direta?\n\nE qual é o resultado mais importante que você quer alcançar com a automação?",
   },
 ];
 
