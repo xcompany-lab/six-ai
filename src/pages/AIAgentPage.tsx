@@ -102,20 +102,36 @@ export default function AIAgentPage() {
             {agentConfigs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhum agente configurado. Execute o onboarding para gerar automaticamente.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {agentConfigs.map(ac => {
-                  const meta = agentLabels[ac.agent_type] || { label: ac.agent_type, icon: Bot };
-                  const Icon = meta.icon;
-                  return (
-                    <div key={ac.id} className="p-4 rounded-lg bg-secondary/50 border border-border flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10"><Icon size={18} className="text-primary" /></div>
-                      <div>
-                        <p className="font-medium text-foreground text-sm">{meta.label}</p>
-                        <p className="text-xs text-muted-foreground">{ac.system_prompt ? `${ac.system_prompt.length} chars` : 'Vazio'}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {agentConfigs.map(ac => {
+                    const meta = agentLabels[ac.agent_type] || { label: ac.agent_type, icon: Bot };
+                    const Icon = meta.icon;
+                    const isExpanded = expandedAgent === ac.id;
+                    return (
+                      <button key={ac.id} onClick={() => setExpandedAgent(isExpanded ? null : ac.id)}
+                        className="p-4 rounded-lg bg-secondary/50 border border-border flex items-center gap-3 text-left w-full hover:bg-secondary/80 transition-colors">
+                        <div className="p-2 rounded-lg bg-primary/10"><Icon size={18} className="text-primary" /></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm">{meta.label}</p>
+                          <p className="text-xs text-muted-foreground">{ac.system_prompt ? `${ac.system_prompt.length} chars` : 'Vazio'}</p>
+                        </div>
+                        <ChevronDown size={16} className={`text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+                <AnimatePresence>
+                  {agentConfigs.map(ac => expandedAgent === ac.id && ac.system_prompt ? (
+                    <motion.div key={`prompt-${ac.id}`}
+                      initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden">
+                      <ScrollArea className="max-h-[400px] rounded-lg border border-border bg-secondary/30 p-4">
+                        <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt}</pre>
+                      </ScrollArea>
+                    </motion.div>
+                  ) : null)}
+                </AnimatePresence>
               </div>
             )}
           </motion.div>
