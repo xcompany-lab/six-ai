@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get user's business profile for context
+    // Get user's business profile for context (prefer business_profiles, fallback to profiles)
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await createClient(
@@ -28,9 +28,18 @@ Deno.serve(async (req) => {
 
     let businessContext = "";
     if (user) {
-      const { data: profile } = await supabaseAdmin.from("profiles").select("brand_name, niche, services, voice_tone").eq("id", user.id).single();
-      if (profile) {
-        businessContext = `Negócio: ${profile.brand_name || ""}. Nicho: ${profile.niche || ""}. Serviços: ${(profile.services || []).join(", ")}. Tom: ${profile.voice_tone || "Profissional e empático"}.`;
+      // Try business_profiles first (richer data from onboarding)
+      const { data: bp } = await supabaseAdmin.from("business_profiles").select("business_name, segment, tone, services, faq, objections, qualified_lead_criteria").eq("user_id", user.id).single();
+      if (bp) {
+        const services = Array.isArray(bp.services) ? (bp.services as string[]).join(", ") : "";
+        const faqItems = Array.isArray(bp.faq) ? (bp.faq as { q: string; a: string }[]).map(f => `P: ${f.q} R: ${f.a}`).join(" | ") : "";
+        businessContext = `Negócio: ${bp.business_name}. Segmento: ${bp.segment}. Tom: ${bp.tone}. Serviços: ${services}. Critério de lead qualificado: ${bp.qualified_lead_criteria}.${faqItems ? ` FAQ: ${faqItems}.` : ""}`;
+      } else {
+        // Fallback to profiles table
+        const { data: profile } = await supabaseAdmin.from("profiles").select("brand_name, niche, services, voice_tone").eq("id", user.id).single();
+        if (profile) {
+          businessContext = `Negócio: ${profile.brand_name || ""}. Nicho: ${profile.niche || ""}. Serviços: ${(profile.services || []).join(", ")}. Tom: ${profile.voice_tone || "Profissional e empático"}.`;
+        }
       }
     }
 
