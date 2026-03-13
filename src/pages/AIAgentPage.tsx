@@ -17,6 +17,7 @@ const agentLabels: Record<string, { label: string; icon: typeof Bot }> = {
 
 export default function AIAgentPage() {
   const navigate = useNavigate();
+  const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const { data: profile, isLoading: loadingProfile } = useBusinessProfile();
   const { data: agentConfig, isLoading: loadingConfig } = useAIAgentConfig();
   const { data: agentConfigs = [] } = useAgentConfigs();
