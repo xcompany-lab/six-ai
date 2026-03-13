@@ -181,7 +181,7 @@ export default function OnboardingPage() {
       />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-8">
         {/* Logo */}
         <motion.img
           src={sixLogoHero}
