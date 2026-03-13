@@ -84,6 +84,6 @@ serve(async (req) => {
     return Response.redirect("https://usesix.com.br/app/configuracoes?google=connected");
   } catch (e) {
     console.error("Google callback error:", e);
-    return Response.redirect("https://six-ai.lovable.app/settings?google=error");
+    return Response.redirect("https://usesix.com.br/app/configuracoes?google=error");
   }
 });
