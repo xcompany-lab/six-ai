@@ -57,8 +57,9 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium mb-8">
-              <Zap className="h-4 w-4" /> Smart Interaction eXperience
+            <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 justify-center mb-8">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="badge-gradient-brand">Smart Interaction eXperience</span>
             </motion.div>
 
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-6">
