@@ -376,8 +376,8 @@ export default function HomePage() {
                 { icon: Calendar, label: 'Reduzir faltas' },
                 { icon: MessageSquare, label: 'Recuperar contatos' },
               ].map(({ icon: Icon, label }, i) => (
-                <motion.div key={label} variants={fadeUp} custom={i} className="p-5 rounded-xl glass text-center">
-                  <Icon className="h-6 w-6 text-primary mx-auto mb-3" />
+                <motion.div key={label} variants={fadeUp} custom={i} className="p-5 rounded-xl glass text-center flex flex-col items-center">
+                  <CyberIcon icon={Icon} variant="cyan" size="sm" className="mb-3" />
                   <span className="text-sm font-medium">{label}</span>
                 </motion.div>
               ))}
