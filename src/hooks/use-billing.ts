@@ -46,6 +46,22 @@ export interface InsightData {
   monthlyGrowth: number;
   leadsByStatus: Record<string, number>;
   leadsByOrigin: Record<string, number>;
+  // Campaign analytics
+  campaignStats: Array<{ name: string; sent: number; responded: number; rate: number; status: string }>;
+  totalCampaignsSent: number;
+  totalCampaignResponses: number;
+  avgCampaignResponseRate: number;
+  // AI performance
+  aiConversations: number;
+  aiPositiveSentiment: number;
+  aiNeutralSentiment: number;
+  aiNegativeSentiment: number;
+  // Funnel data
+  funnelData: Array<{ stage: string; count: number; percent: number }>;
+  // Lead trend (last 7 days)
+  leadTrend: Array<{ date: string; leads: number }>;
+  // Appointment trend
+  appointmentTrend: Array<{ date: string; total: number; confirmed: number; noshow: number }>;
 }
 
 export function useInsightsData() {
@@ -59,21 +75,23 @@ export function useInsightsData() {
       const monthAgo = new Date(now.getTime() - 30 * 86400000);
       const twoMonthsAgo = new Date(now.getTime() - 60 * 86400000);
 
-      // Fetch all leads
-      const { data: leads = [] } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('user_id', user!.id);
+      const [leadsRes, appointmentsRes, contactsRes, campaignsRes, campaignMsgsRes, appointmentsMonthRes] = await Promise.all([
+        supabase.from('leads').select('*').eq('user_id', user!.id),
+        supabase.from('appointments').select('*').eq('user_id', user!.id).gte('date', weekAgo.toISOString().split('T')[0]).lte('date', now.toISOString().split('T')[0]),
+        supabase.from('contact_memory').select('*').eq('user_id', user!.id),
+        supabase.from('activation_campaigns').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(10),
+        supabase.from('campaign_messages').select('*').eq('user_id', user!.id),
+        supabase.from('appointments').select('*').eq('user_id', user!.id).gte('date', monthAgo.toISOString().split('T')[0]),
+      ]);
 
-      // Fetch appointments this week
-      const { data: appointments = [] } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('user_id', user!.id)
-        .gte('date', weekAgo.toISOString().split('T')[0])
-        .lte('date', now.toISOString().split('T')[0]);
+      const leads = leadsRes.data || [];
+      const appointments = appointmentsRes.data || [];
+      const contacts = contactsRes.data || [];
+      const campaigns = campaignsRes.data || [];
+      const campaignMsgs = campaignMsgsRes.data || [];
+      const appointmentsMonth = appointmentsMonthRes.data || [];
 
-      // Calculations
+      // Base metrics
       const totalLeads = leads.length;
       const newLeadsThisWeek = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
       const clients = leads.filter(l => l.status === 'client').length;
@@ -81,60 +99,97 @@ export function useInsightsData() {
       const noShows = leads.filter(l => l.status === 'no_show').length;
       const noShowRate = totalLeads > 0 ? Math.round((noShows / totalLeads) * 100) : 0;
 
-      // Leads by status
       const leadsByStatus: Record<string, number> = {};
       leads.forEach(l => { leadsByStatus[l.status] = (leadsByStatus[l.status] || 0) + 1; });
 
-      // Leads by origin
       const leadsByOrigin: Record<string, number> = {};
       leads.forEach(l => { if (l.origin) leadsByOrigin[l.origin] = (leadsByOrigin[l.origin] || 0) + 1; });
 
-      // Top origin
       const topOrigin = Object.entries(leadsByOrigin).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
-      // Top service from appointments
       const serviceCount: Record<string, number> = {};
       appointments.forEach(a => { if (a.service) serviceCount[a.service] = (serviceCount[a.service] || 0) + 1; });
       const topService = Object.entries(serviceCount).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
-      // Scheduled this week
       const scheduledThisWeek = appointments.filter(a => a.status === 'confirmed' || a.status === 'pending').length;
+      const reactivationPool = leads.filter(l => l.status !== 'client' && new Date(l.last_contact) < monthAgo).length;
 
-      // Reactivation pool: leads not contacted in 30+ days, not clients
-      const reactivationPool = leads.filter(l => 
-        l.status !== 'client' && new Date(l.last_contact) < monthAgo
-      ).length;
-
-      // Monthly growth: leads created this month vs last month
       const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= monthAgo).length;
-      const lastMonthLeads = leads.filter(l => {
-        const d = new Date(l.created_at);
-        return d >= twoMonthsAgo && d < monthAgo;
-      }).length;
+      const lastMonthLeads = leads.filter(l => { const d = new Date(l.created_at); return d >= twoMonthsAgo && d < monthAgo; }).length;
       const monthlyGrowth = lastMonthLeads > 0 ? Math.round(((thisMonthLeads - lastMonthLeads) / lastMonthLeads) * 100) : (thisMonthLeads > 0 ? 100 : 0);
 
-      // Pending follow-ups: leads in_progress or interested without recent contact
-      const pendingFollowUps = leads.filter(l => 
-        ['in_progress', 'interested', 'awaiting_schedule'].includes(l.status) &&
-        new Date(l.last_contact) < weekAgo
+      const pendingFollowUps = leads.filter(l =>
+        ['in_progress', 'interested', 'awaiting_schedule'].includes(l.status) && new Date(l.last_contact) < weekAgo
       ).length;
 
+      // Campaign analytics
+      const campaignStats = campaigns.map(c => {
+        const msgs = campaignMsgs.filter(m => m.campaign_id === c.id);
+        const sent = msgs.filter(m => m.status === 'sent').length;
+        const responded = c.responses_count || 0;
+        return { name: c.name, sent, responded, rate: sent > 0 ? Math.round((responded / sent) * 100) : 0, status: c.status };
+      });
+      const totalCampaignsSent = campaignMsgs.filter(m => m.status === 'sent').length;
+      const totalCampaignResponses = campaigns.reduce((sum, c) => sum + (c.responses_count || 0), 0);
+      const avgCampaignResponseRate = totalCampaignsSent > 0 ? Math.round((totalCampaignResponses / totalCampaignsSent) * 100) : 0;
+
+      // AI performance (from contact_memory sentiments)
+      const aiConversations = contacts.length;
+      const aiPositiveSentiment = contacts.filter(c => c.sentiment === 'positive').length;
+      const aiNeutralSentiment = contacts.filter(c => c.sentiment === 'neutral').length;
+      const aiNegativeSentiment = contacts.filter(c => c.sentiment === 'negative').length;
+
+      // Funnel data
+      const funnelStages = [
+        { stage: 'Novo', key: 'new' },
+        { stage: 'Em andamento', key: 'in_progress' },
+        { stage: 'Interessado', key: 'interested' },
+        { stage: 'Agendado', key: 'scheduled' },
+        { stage: 'Cliente', key: 'client' },
+      ];
+      const funnelData = funnelStages.map(f => ({
+        stage: f.stage,
+        count: leadsByStatus[f.key] || 0,
+        percent: totalLeads > 0 ? Math.round(((leadsByStatus[f.key] || 0) / totalLeads) * 100) : 0,
+      }));
+
+      // Lead trend (last 7 days)
+      const leadTrend: Array<{ date: string; leads: number }> = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 86400000);
+        const dateStr = d.toISOString().split('T')[0];
+        const count = leads.filter(l => l.created_at?.startsWith(dateStr)).length;
+        leadTrend.push({ date: dateStr.slice(5), leads: count });
+      }
+
+      // Appointment trend (last 30 days, grouped by week)
+      const appointmentTrend: Array<{ date: string; total: number; confirmed: number; noshow: number }> = [];
+      for (let i = 3; i >= 0; i--) {
+        const weekStart = new Date(now.getTime() - (i + 1) * 7 * 86400000);
+        const weekEnd = new Date(now.getTime() - i * 7 * 86400000);
+        const weekLabel = `Sem ${4 - i}`;
+        const weekAppts = appointmentsMonth.filter(a => {
+          const d = new Date(a.date);
+          return d >= weekStart && d < weekEnd;
+        });
+        appointmentTrend.push({
+          date: weekLabel,
+          total: weekAppts.length,
+          confirmed: weekAppts.filter(a => a.status === 'confirmed' || a.status === 'completed').length,
+          noshow: weekAppts.filter(a => a.status === 'no_show' || a.status === 'cancelled').length,
+        });
+      }
+
       return {
-        totalLeads,
-        newLeadsThisWeek,
-        conversionRate,
-        avgResponseTime: '—',
-        noShowRate,
-        topOrigin,
-        topService,
-        scheduledThisWeek,
-        pendingFollowUps,
-        reactivationPool,
-        monthlyGrowth,
-        leadsByStatus,
-        leadsByOrigin,
+        totalLeads, newLeadsThisWeek, conversionRate, avgResponseTime: '—',
+        noShowRate, topOrigin, topService, scheduledThisWeek, pendingFollowUps,
+        reactivationPool, monthlyGrowth, leadsByStatus, leadsByOrigin,
+        campaignStats, totalCampaignsSent, totalCampaignResponses, avgCampaignResponseRate,
+        aiConversations, aiPositiveSentiment, aiNeutralSentiment, aiNegativeSentiment,
+        funnelData, leadTrend, appointmentTrend,
       } as InsightData;
     },
     enabled: !!user,
+    refetchInterval: 30000,
   });
 }
