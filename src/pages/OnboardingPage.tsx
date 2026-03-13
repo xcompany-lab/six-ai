@@ -412,10 +412,10 @@ export default function OnboardingPage() {
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Digite sua resposta..."
+                placeholder={isRecording ? "Gravando áudio..." : "Digite sua resposta ou use o microfone..."}
                 rows={3}
                 className="w-full resize-none bg-transparent px-2 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none max-h-48 relative z-10"
-                disabled={isGenerating}
+                disabled={isGenerating || isRecording}
               />
 
               {/* Bottom bar: attachment buttons + send */}
