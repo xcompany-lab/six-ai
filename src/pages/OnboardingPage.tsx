@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSaveBusinessProfile } from '@/hooks/use-business-profile';
+import { useBusinessProfile, useSaveBusinessProfile } from '@/hooks/use-business-profile';
 import { ArrowRight, ArrowLeft, Check, Loader2, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogo from '@/assets/six-logo-dark.png';
