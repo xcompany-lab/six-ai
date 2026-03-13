@@ -19,7 +19,7 @@ interface Attachment {
 const QUESTIONS: { label: string; content: string }[] = [
   {
     label: 'Sobre o negócio',
-    content: "Olá! 👋 Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
+    content: "Sou o orquestrador do SIX AI.\n\n**Me conte tudo sobre seu negócio.** O que você faz, quem é seu cliente ideal, como você atende hoje?\n\nQuanto mais detalhe, melhor seus agentes ficam.\n\nAnexe o link do seu Instagram, site, cardápio ou qualquer arquivo que ajude.",
   },
   {
     label: 'Objeções',
