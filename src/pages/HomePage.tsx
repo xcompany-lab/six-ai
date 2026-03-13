@@ -352,7 +352,7 @@ export default function HomePage() {
                     href={PLAN_FEATURES[plan.key].checkoutUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`cyber-btn w-full ${plan.highlighted ? 'cyber-btn-primary' : 'cyber-btn-outline'}`}
+                    className="cyber-btn w-full cyber-btn-primary"
                   >
                     <span className="cyber-btn-inner w-full justify-center">
                       {plan.cta}
