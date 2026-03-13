@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square } from 'lucide-react';
+import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogoHero from '@/assets/six-logo-hero.png';
 
@@ -14,6 +14,15 @@ interface Attachment {
   url?: string;
   storagePath?: string;
 }
+
+interface ServicePrice {
+  name: string;
+  price: string;
+  notes: string;
+}
+
+const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
+
 
 // Hardcoded orchestrator questions
 const QUESTIONS: { label: string; headline: string; subtitle?: string }[] = [
@@ -54,6 +63,11 @@ export default function OnboardingPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
+  const [pricingStep, setPricingStep] = useState(false);
+  const [isExtractingServices, setIsExtractingServices] = useState(false);
+  const [extractedServices, setExtractedServices] = useState<ServicePrice[]>([]);
+  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [plansText, setPlansText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -238,6 +252,117 @@ export default function OnboardingPage() {
     }
   };
 
+  const triggerGeneration = useCallback(async (pricingData?: string) => {
+    setIsGenerating(true);
+    setLoadingStage(0);
+    const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
+    const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
+
+    try {
+      const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
+      const files = allAttachments.current.filter(a => a.type === 'file').map(a => a.url!);
+      const images = allAttachments.current.filter(a => a.type === 'image').map(a => a.url!);
+
+      let freeText = userResponses.current.join('\n\n---\n\n');
+      if (pricingData) freeText += '\n\n---\n\n' + pricingData;
+
+      const { data, error } = await supabase.functions.invoke('generate-agent-configs', {
+        body: { free_text: freeText, links, files, images },
+      });
+
+      if (error) throw error;
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      await refreshProfile();
+      toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
+      setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
+    } catch (err) {
+      console.error('Generation error:', err);
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      setIsGenerating(false);
+      toast.error('Erro ao gerar agentes. Tente novamente.');
+    }
+  }, [navigate, refreshProfile]);
+
+  const extractAndShowPricing = useCallback(async () => {
+    setIsExtractingServices(true);
+    try {
+      const freeText = userResponses.current.join('\n\n---\n\n');
+      const { data, error } = await supabase.functions.invoke('extract-services', {
+        body: { free_text: freeText },
+      });
+
+      if (error) throw error;
+
+      const services: ServicePrice[] = (data?.services || []).map((s: any) => ({
+        name: s.name || '',
+        price: s.price || '',
+        notes: '',
+      }));
+
+      // Always have at least one empty row
+      if (services.length === 0) {
+        services.push({ name: '', price: '', notes: '' });
+      }
+
+      setExtractedServices(services);
+      setPricingStep(true);
+    } catch (err) {
+      console.error('Extract services error:', err);
+      toast.error('Erro ao extrair serviços. Continuando sem preços...');
+      // Fallback: go straight to generation
+      await triggerGeneration();
+    } finally {
+      setIsExtractingServices(false);
+    }
+  }, [triggerGeneration]);
+
+  const confirmPricing = useCallback(async () => {
+    // Build pricing text
+    const validServices = extractedServices.filter(s => s.name.trim());
+    const lines: string[] = [];
+
+    if (validServices.length > 0) {
+      lines.push('TABELA DE PREÇOS E SERVIÇOS:');
+      for (const s of validServices) {
+        let line = `- ${s.name}`;
+        if (s.price.trim()) line += `: ${s.price}`;
+        if (s.notes.trim()) line += ` (${s.notes})`;
+        lines.push(line);
+      }
+    }
+
+    if (selectedPayments.length > 0) {
+      lines.push(`\nFORMAS DE PAGAMENTO ACEITAS: ${selectedPayments.join(', ')}`);
+    }
+
+    if (plansText.trim()) {
+      lines.push(`\nPLANOS E PACOTES:\n${plansText}`);
+    }
+
+    // Save service_prices to business_profiles
+    if (user) {
+      const servicePricesData = validServices.map(s => ({
+        name: s.name,
+        price: s.price,
+        notes: s.notes,
+      }));
+
+      await supabase
+        .from('business_profiles')
+        .upsert({
+          user_id: user.id,
+          service_prices: servicePricesData as any,
+        } as any, { onConflict: 'user_id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving service_prices:', error);
+        });
+    }
+
+    await triggerGeneration(lines.join('\n'));
+  }, [extractedServices, selectedPayments, plansText, triggerGeneration, user]);
+
   const sendMessage = useCallback(async () => {
     const text = inputText.trim();
     if (!text && attachments.length === 0) return;
@@ -255,44 +380,10 @@ export default function OnboardingPage() {
       setCurrentStep(nextStep);
     } else {
       setCurrentStep(nextStep);
-      setIsGenerating(true);
-      setLoadingStage(0);
-
-      // Animate loading stages
-      const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
-      const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
-
-      try {
-        const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
-        const files = allAttachments.current.filter(a => a.type === 'file').map(a => a.url!);
-        const images = allAttachments.current.filter(a => a.type === 'image').map(a => a.url!);
-
-        const { data, error } = await supabase.functions.invoke('generate-agent-configs', {
-          body: {
-            free_text: userResponses.current.join('\n\n---\n\n'),
-            links,
-            files,
-            images,
-          },
-        });
-
-        if (error) throw error;
-        clearTimeout(stageTimer1);
-        clearTimeout(stageTimer2);
-        await refreshProfile();
-        toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
-        setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
-      } catch (err) {
-        console.error('Generation error:', err);
-        clearTimeout(stageTimer1);
-        clearTimeout(stageTimer2);
-        setIsGenerating(false);
-        toast.error('Erro ao gerar agentes. Tente novamente.');
-        setCurrentStep(QUESTIONS.length - 1);
-        setCompletedSteps(prev => prev.filter(s => s !== QUESTIONS.length - 1));
-      }
+      // Instead of generating immediately, extract services first
+      await extractAndShowPricing();
     }
-  }, [inputText, attachments, currentStep, isGenerating, navigate, refreshProfile]);
+  }, [inputText, attachments, currentStep, isGenerating, extractAndShowPricing]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -301,8 +392,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const totalSteps = QUESTIONS.length;
-  const isDone = currentStep >= totalSteps;
+  const totalSteps = QUESTIONS.length + 1; // +1 for pricing step
+  const isDone = currentStep >= QUESTIONS.length && !pricingStep && !isExtractingServices;
 
   const renderMarkdown = (text: string | undefined) =>
     (text ?? '').split(/(\*\*.*?\*\*)/).map((part, j) =>
@@ -352,15 +443,16 @@ export default function OnboardingPage() {
             <div key={i} className="flex items-center gap-3">
               <div
                 className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                  completedSteps.includes(i) ? 'bg-accent w-2.5 h-2.5' :
-                  i === currentStep && !isDone ? 'bg-primary animate-pulse w-3 h-3' :
-                  isDone ? 'bg-accent w-2.5 h-2.5' :
+                  completedSteps.includes(i) || (i < QUESTIONS.length && currentStep > i) ? 'bg-accent w-2.5 h-2.5' :
+                  (i < QUESTIONS.length && i === currentStep && !pricingStep) ? 'bg-primary animate-pulse w-3 h-3' :
+                  (i === QUESTIONS.length && pricingStep) ? 'bg-primary animate-pulse w-3 h-3' :
+                  (isDone || isGenerating) ? 'bg-accent w-2.5 h-2.5' :
                   'bg-muted-foreground/30'
                 }`}
               />
               {i < totalSteps - 1 && (
                 <div className={`w-8 h-px transition-colors duration-500 ${
-                  completedSteps.includes(i) ? 'bg-accent/50' : 'bg-border'
+                  completedSteps.includes(i) || currentStep > i ? 'bg-accent/50' : 'bg-border'
                 }`} />
               )}
             </div>
@@ -383,9 +475,9 @@ export default function OnboardingPage() {
           </motion.div>
         )}
 
-        {/* Question */}
+        {/* Question / Pricing / Loading */}
         <AnimatePresence mode="wait">
-          {!isDone && !isGenerating && (
+          {!isDone && !isGenerating && !pricingStep && !isExtractingServices && currentStep < QUESTIONS.length && (
             <motion.div
               key={currentStep}
               initial={{ opacity: 0, y: 20 }}
@@ -402,6 +494,142 @@ export default function OnboardingPage() {
                   {QUESTIONS[currentStep].subtitle}
                 </p>
               )}
+            </motion.div>
+          )}
+
+          {isExtractingServices && (
+            <motion.div
+              key="extracting"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center flex flex-col items-center gap-4"
+            >
+              <Loader2 size={32} className="animate-spin text-primary" />
+              <p className="text-muted-foreground">Identificando seus serviços...</p>
+            </motion.div>
+          )}
+
+          {pricingStep && !isGenerating && (
+            <motion.div
+              key="pricing"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-3xl"
+            >
+              <div className="text-center mb-8">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gradient-glow">
+                  Identifiquei esses serviços. Pode me dizer os valores?
+                </h1>
+                <p className="mt-3 text-sm md:text-base text-muted-foreground">
+                  Se algum serviço estiver faltando, adicione abaixo. Deixe o valor em branco se preferir não informar.
+                </p>
+              </div>
+
+              {/* Service cards */}
+              <div className="space-y-3 mb-6">
+                {extractedServices.map((service, i) => (
+                  <div key={i} className="glass-strong rounded-xl p-4 border border-border/50 flex flex-col sm:flex-row gap-3">
+                    <input
+                      value={service.name}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], name: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="Nome do serviço"
+                      className="flex-1 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <input
+                      value={service.price}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], price: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="R$ 0,00"
+                      className="w-full sm:w-32 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <input
+                      value={service.notes}
+                      onChange={e => {
+                        const updated = [...extractedServices];
+                        updated[i] = { ...updated[i], notes: e.target.value };
+                        setExtractedServices(updated);
+                      }}
+                      placeholder="Obs. (opcional)"
+                      className="w-full sm:w-40 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <button
+                      onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
+                      className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() => setExtractedServices(prev => [...prev, { name: '', price: '', notes: '' }])}
+                  className="w-full rounded-xl border border-dashed border-border/50 py-3 text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus size={16} /> Adicionar serviço
+                </button>
+              </div>
+
+              {/* Payment methods */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-foreground mb-3">Formas de pagamento aceitas</p>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_METHODS.map(method => (
+                    <button
+                      key={method}
+                      onClick={() => setSelectedPayments(prev =>
+                        prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
+                      )}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        selectedPayments.includes(method)
+                          ? 'bg-primary/15 border-primary/40 text-primary'
+                          : 'bg-transparent border-border/50 text-muted-foreground hover:border-primary/30'
+                      }`}
+                    >
+                      {method}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plans / packages */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-foreground mb-2">Planos ou pacotes (opcional)</p>
+                <textarea
+                  value={plansText}
+                  onChange={e => setPlansText(e.target.value)}
+                  placeholder="Ex: Pacote 5 sessões com 10% de desconto, Plano mensal ilimitado R$ 299..."
+                  rows={3}
+                  className="w-full resize-none glass-strong rounded-xl border border-border/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setPricingStep(false);
+                    triggerGeneration();
+                  }}
+                  className="px-6 py-2.5 rounded-xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                >
+                  Pular
+                </button>
+                <button
+                  onClick={confirmPricing}
+                  className="px-8 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors"
+                >
+                  Confirmar e gerar agentes
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -438,7 +666,6 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
-              {/* Indeterminate progress bar */}
               <div className="w-48 h-1 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-gradient-brand"
@@ -450,7 +677,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {isDone && !isGenerating && (
+          {isDone && !isGenerating && !pricingStep && (
             <motion.div
               key="done"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -469,7 +696,7 @@ export default function OnboardingPage() {
         </AnimatePresence>
 
         {/* Input container — Claude style */}
-        {!isDone && (
+        {!isDone && !pricingStep && !isExtractingServices && currentStep < QUESTIONS.length && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

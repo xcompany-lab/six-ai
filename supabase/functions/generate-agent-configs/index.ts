@@ -191,7 +191,7 @@ serve(async (req) => {
       }
     }
 
-    const { free_text = "", links = [], files = [], images = [] } = body;
+    const { free_text = "", links = [], files = [], images = [], service_prices = [] } = body;
 
     console.log(`Processing onboarding for user ${userId}: ${free_text.length} chars, ${links.length} links, ${files.length} files, ${images.length} images`);
 

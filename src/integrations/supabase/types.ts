@@ -210,6 +210,7 @@ export type Database = {
           objections: Json
           qualified_lead_criteria: string
           segment: string
+          service_prices: Json
           services: Json
           tone: string
           updated_at: string
@@ -226,6 +227,7 @@ export type Database = {
           objections?: Json
           qualified_lead_criteria?: string
           segment?: string
+          service_prices?: Json
           services?: Json
           tone?: string
           updated_at?: string
@@ -242,6 +244,7 @@ export type Database = {
           objections?: Json
           qualified_lead_criteria?: string
           segment?: string
+          service_prices?: Json
           services?: Json
           tone?: string
           updated_at?: string
