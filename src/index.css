@@ -151,6 +151,8 @@
   background: hsl(220 20% 4%);
   padding: 2px;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 .cyber-icon-face {
