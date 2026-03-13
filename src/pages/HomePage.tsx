@@ -424,6 +424,10 @@ export default function HomePage() {
             <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Sem fidelidade</span>
             <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Cancele quando quiser</span>
           </div>
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <a href="/termos" className="hover:text-foreground transition-colors">Termos de Uso</a>
+            <a href="/privacidade" className="hover:text-foreground transition-colors">Política de Privacidade</a>
+          </div>
           <p className="text-xs text-muted-foreground">
             Desenvolvido por <span className="text-foreground font-medium">X-Company Tech AI</span>
           </p>
