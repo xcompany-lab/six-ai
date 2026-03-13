@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.transcribe-onboarding-audio]
 verify_jwt = false
+
+[functions.extract-services]
+verify_jwt = false
