@@ -171,9 +171,6 @@ export default function HomePage() {
                   <div className="inline-block mb-6">
                     <CyberIcon icon={Icon} variant="cyan" size="lg" />
                   </div>
-                  <div className="absolute -top-2 -right-2 md:right-auto md:-left-2 text-xs font-mono font-bold text-primary bg-primary/10 rounded-full h-8 w-8 flex items-center justify-center">
-                    {step}
-                  </div>
                   <h3 className="text-xl font-bold mb-2">{title}</h3>
                   <p className="text-muted-foreground">{desc}</p>
                 </motion.div>
