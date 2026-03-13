@@ -252,6 +252,117 @@ export default function OnboardingPage() {
     }
   };
 
+  const triggerGeneration = useCallback(async (pricingData?: string) => {
+    setIsGenerating(true);
+    setLoadingStage(0);
+    const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
+    const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
+
+    try {
+      const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
+      const files = allAttachments.current.filter(a => a.type === 'file').map(a => a.url!);
+      const images = allAttachments.current.filter(a => a.type === 'image').map(a => a.url!);
+
+      let freeText = userResponses.current.join('\n\n---\n\n');
+      if (pricingData) freeText += '\n\n---\n\n' + pricingData;
+
+      const { data, error } = await supabase.functions.invoke('generate-agent-configs', {
+        body: { free_text: freeText, links, files, images },
+      });
+
+      if (error) throw error;
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      await refreshProfile();
+      toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
+      setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
+    } catch (err) {
+      console.error('Generation error:', err);
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      setIsGenerating(false);
+      toast.error('Erro ao gerar agentes. Tente novamente.');
+    }
+  }, [navigate, refreshProfile]);
+
+  const extractAndShowPricing = useCallback(async () => {
+    setIsExtractingServices(true);
+    try {
+      const freeText = userResponses.current.join('\n\n---\n\n');
+      const { data, error } = await supabase.functions.invoke('extract-services', {
+        body: { free_text: freeText },
+      });
+
+      if (error) throw error;
+
+      const services: ServicePrice[] = (data?.services || []).map((s: any) => ({
+        name: s.name || '',
+        price: s.price || '',
+        notes: '',
+      }));
+
+      // Always have at least one empty row
+      if (services.length === 0) {
+        services.push({ name: '', price: '', notes: '' });
+      }
+
+      setExtractedServices(services);
+      setPricingStep(true);
+    } catch (err) {
+      console.error('Extract services error:', err);
+      toast.error('Erro ao extrair serviços. Continuando sem preços...');
+      // Fallback: go straight to generation
+      await triggerGeneration();
+    } finally {
+      setIsExtractingServices(false);
+    }
+  }, [triggerGeneration]);
+
+  const confirmPricing = useCallback(async () => {
+    // Build pricing text
+    const validServices = extractedServices.filter(s => s.name.trim());
+    const lines: string[] = [];
+
+    if (validServices.length > 0) {
+      lines.push('TABELA DE PREÇOS E SERVIÇOS:');
+      for (const s of validServices) {
+        let line = `- ${s.name}`;
+        if (s.price.trim()) line += `: ${s.price}`;
+        if (s.notes.trim()) line += ` (${s.notes})`;
+        lines.push(line);
+      }
+    }
+
+    if (selectedPayments.length > 0) {
+      lines.push(`\nFORMAS DE PAGAMENTO ACEITAS: ${selectedPayments.join(', ')}`);
+    }
+
+    if (plansText.trim()) {
+      lines.push(`\nPLANOS E PACOTES:\n${plansText}`);
+    }
+
+    // Save service_prices to business_profiles
+    if (user) {
+      const servicePricesData = validServices.map(s => ({
+        name: s.name,
+        price: s.price,
+        notes: s.notes,
+      }));
+
+      await supabase
+        .from('business_profiles')
+        .upsert({
+          user_id: user.id,
+          service_prices: servicePricesData as any,
+        } as any, { onConflict: 'user_id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving service_prices:', error);
+        });
+    }
+
+    await triggerGeneration(lines.join('\n'));
+  }, [extractedServices, selectedPayments, plansText, triggerGeneration, user]);
+
   const sendMessage = useCallback(async () => {
     const text = inputText.trim();
     if (!text && attachments.length === 0) return;
@@ -269,44 +380,10 @@ export default function OnboardingPage() {
       setCurrentStep(nextStep);
     } else {
       setCurrentStep(nextStep);
-      setIsGenerating(true);
-      setLoadingStage(0);
-
-      // Animate loading stages
-      const stageTimer1 = setTimeout(() => setLoadingStage(1), 3000);
-      const stageTimer2 = setTimeout(() => setLoadingStage(2), 6000);
-
-      try {
-        const links = allAttachments.current.filter(a => a.type === 'link').map(a => a.url!);
-        const files = allAttachments.current.filter(a => a.type === 'file').map(a => a.url!);
-        const images = allAttachments.current.filter(a => a.type === 'image').map(a => a.url!);
-
-        const { data, error } = await supabase.functions.invoke('generate-agent-configs', {
-          body: {
-            free_text: userResponses.current.join('\n\n---\n\n'),
-            links,
-            files,
-            images,
-          },
-        });
-
-        if (error) throw error;
-        clearTimeout(stageTimer1);
-        clearTimeout(stageTimer2);
-        await refreshProfile();
-        toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
-        setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
-      } catch (err) {
-        console.error('Generation error:', err);
-        clearTimeout(stageTimer1);
-        clearTimeout(stageTimer2);
-        setIsGenerating(false);
-        toast.error('Erro ao gerar agentes. Tente novamente.');
-        setCurrentStep(QUESTIONS.length - 1);
-        setCompletedSteps(prev => prev.filter(s => s !== QUESTIONS.length - 1));
-      }
+      // Instead of generating immediately, extract services first
+      await extractAndShowPricing();
     }
-  }, [inputText, attachments, currentStep, isGenerating, navigate, refreshProfile]);
+  }, [inputText, attachments, currentStep, isGenerating, extractAndShowPricing]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
