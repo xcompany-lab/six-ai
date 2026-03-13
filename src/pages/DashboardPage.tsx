@@ -4,6 +4,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLeads } from '@/hooks/use-leads';
 import { useDashboardStats } from '@/hooks/use-dashboard';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Users, TrendingUp, CalendarCheck, CheckCircle, RotateCcw, Cpu,
   AlertTriangle, Clock, UserPlus, CalendarX, MessageSquare, Loader2,
@@ -42,7 +43,14 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${profile?.name?.split(' ')[0] || 'usuário'}. Aqui está sua visão geral.`} />
+      <PageHeader title="Dashboard SIX" subtitle={`Olá, ${profile?.name?.split(' ')[0] || 'usuário'}. Aqui está sua visão geral.`}>
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={profile?.avatar || undefined} alt={profile?.name} />
+          <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold">
+            {profile?.name?.charAt(0) || 'U'}
+          </AvatarFallback>
+        </Avatar>
+      </PageHeader>
 
       {/* Row 1 — Core KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
