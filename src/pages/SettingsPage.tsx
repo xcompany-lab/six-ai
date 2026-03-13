@@ -99,9 +99,6 @@ export default function SettingsPage() {
     } catch (e) {
       toast.error('Erro ao conectar com Google.');
       setGoogleLoading(false);
-    }
-
-    window.location.href = authUrl;
   };
 
   const disconnectGoogleCalendar = async () => {
