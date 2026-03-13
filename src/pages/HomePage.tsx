@@ -92,14 +92,16 @@ export default function HomePage() {
 
             {/* CTAs */}
             <motion.div variants={fadeUp} custom={4} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="bg-gradient-brand text-primary-foreground px-8 h-12 text-base glow-blue" asChild>
-                <a href={trialUrl} target="_blank" rel="noopener noreferrer">
-                  Começar Teste Gratuito de 5 Dias <ArrowRight className="ml-1 h-5 w-5" />
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 text-base" asChild>
-                <a href="#como-funciona">Ver como funciona</a>
-              </Button>
+              <a href={trialUrl} target="_blank" rel="noopener noreferrer" className="cyber-btn cyber-btn-primary">
+                <span className="cyber-btn-inner">
+                  Começar Teste Gratuito de 5 Dias <ArrowRight className="ml-1 h-5 w-5 inline" />
+                </span>
+              </a>
+              <a href="#como-funciona" className="cyber-btn cyber-btn-outline">
+                <span className="cyber-btn-inner">
+                  Ver como funciona
+                </span>
+              </a>
             </motion.div>
           </motion.div>
         </div>
