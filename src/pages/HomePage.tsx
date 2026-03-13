@@ -49,7 +49,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32 px-4 sm:px-6">
+      <section className="relative pt-24 pb-20 lg:pt-28 lg:pb-32 px-4 sm:px-6">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
             <motion.div variants={fadeUp} custom={0} className="flex flex-col items-center gap-4 mb-8">
-              <img src={sixLogo} alt="SIX AI" className="h-24 sm:h-28 lg:h-32" />
+              <img src={sixLogo} alt="SIX AI" className="h-44 sm:h-52 lg:h-60" />
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
                 <span className="badge-gradient-brand">Smart Interaction eXperience</span>
