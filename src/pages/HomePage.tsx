@@ -139,9 +139,7 @@ export default function HomePage() {
                 { icon: BarChart3, label: 'Gerar insights para vender mais' },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-3 p-4 rounded-xl glass">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
+                  <CyberIcon icon={Icon} variant="cyan" size="sm" />
                   <span className="text-sm font-medium text-foreground">{label}</span>
                 </div>
               ))}
