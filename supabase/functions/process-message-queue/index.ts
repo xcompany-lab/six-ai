@@ -677,6 +677,13 @@ async function processQueueItem(
         if (crmResponse.ok) {
           const crmData = await crmResponse.json();
           const crmReply = crmData.choices?.[0]?.message?.content || "";
+
+          // Track CRM agent token usage
+          if (crmData.usage) {
+            const crmCostBRL = calculateGeminiCostBRL(crmData.usage);
+            await updateAiUsage(supabaseAdmin, userId, crmCostBRL);
+          }
+
           const crmJson = crmReply.match(/\{[\s\S]*\}/);
           if (crmJson) {
             const decision = JSON.parse(crmJson[0]);
