@@ -157,9 +157,23 @@ serve(async (req) => {
       });
     }
 
-    const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
-    const contactName = messageData.pushName || contactPhone;
     const instanceName = body.instance || "";
+    const isLidFormat = remoteJid.endsWith("@lid");
+
+    // Extract real phone: prefer senderPn/previousRemoteJid for @lid messages
+    let contactPhone = "";
+    const senderPn = (messageData.key as Record<string, unknown>)?.senderPn as string | undefined;
+    const previousRemoteJid = (messageData.key as Record<string, unknown>)?.previousRemoteJid as string | undefined;
+
+    if (senderPn) {
+      contactPhone = cleanPhone(senderPn);
+    } else if (previousRemoteJid && !previousRemoteJid.endsWith("@lid")) {
+      contactPhone = cleanPhone(previousRemoteJid);
+    } else {
+      contactPhone = cleanPhone(remoteJid);
+    }
+
+    const contactName = messageData.pushName || contactPhone;
 
     // === Handle outgoing messages (human takeover + commands) ===
     if (isFromMe) {
