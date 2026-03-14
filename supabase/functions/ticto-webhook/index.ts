@@ -14,6 +14,14 @@ const OFFER_PLAN_MAP: Record<string, { plan: string; contactsLimit: number }> = 
   "O19D97FF2": { plan: "pro", contactsLimit: 5000 },
 };
 
+// Recharge offer codes (Pix top-ups that reset ai_usage_percent)
+const RECHARGE_MAP: Record<string, number> = {
+  "O7FB21253": 10,
+  "O82700531": 15,
+  "OF75DAE2F": 25,
+  "O31D85879": 35,
+};
+
 // Ticto v2.0 status values
 const ACTIVATION_STATUSES = ["authorized"];
 const CANCELLATION_STATUSES = [
@@ -74,6 +82,32 @@ Deno.serve(async (req) => {
     );
 
     if (ACTIVATION_STATUSES.includes(status)) {
+      // Check if this is a recharge (Pix top-up)
+      const rechargeValue = RECHARGE_MAP[offerCode];
+      if (rechargeValue) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .update({ ai_usage_percent: 0 })
+          .eq("email", email)
+          .select("id, email")
+          .single();
+
+        if (error) {
+          console.error("Error processing recharge:", error);
+          return new Response(
+            JSON.stringify({ error: "User not found for recharge" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.log(`Recharge R$${rechargeValue} applied: ${data.email} → ai_usage_percent reset to 0`);
+        return new Response(
+          JSON.stringify({ success: true, type: "recharge", value: rechargeValue, userId: data.id }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Plan activation flow
       const planInfo = OFFER_PLAN_MAP[offerCode];
       if (!planInfo) {
         console.error(`Unknown offer_code: ${offerCode}`);
@@ -83,7 +117,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Try to create user via invite (sends email with password setup link)
       let userCreated = false;
       const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
         data: { name: customerName },
@@ -102,11 +135,9 @@ Deno.serve(async (req) => {
       } else {
         userCreated = true;
         console.log(`User invited successfully: ${email}`);
-        // Wait for handle_new_user trigger to create profile
         await delay(2000);
       }
 
-      // Update profile with the purchased plan
       const { data, error } = await supabase
         .from("profiles")
         .update({ plan: planInfo.plan, contacts_limit: planInfo.contactsLimit })
