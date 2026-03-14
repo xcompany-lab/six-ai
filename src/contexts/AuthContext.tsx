@@ -216,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         isAuthenticated: !!session?.user,
         isOnboarded: profile?.is_onboarded || false,
+        isAdmin,
         isLoading,
         signIn,
         signUp,
