@@ -236,16 +236,13 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
   const saveProfile = useSaveBusinessProfile();
   const [editing, setEditing] = useState(false);
   const [services, setServices] = useState<ServicePriceItem[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [plans, setPlans] = useState('');
 
   const rawPrices = (profile.service_prices || []) as ServicePriceItem[];
 
   const startEditing = () => {
     setServices(rawPrices.length > 0 ? rawPrices.map(s => ({ ...s })) : [{ name: '', price: '', notes: '' }]);
-    // Extract global payment methods and plans from first item or defaults
     const first = rawPrices[0];
-    setPaymentMethods(first?.payment_methods || []);
     setPlans(first?.plans || '');
     setEditing(true);
   };
@@ -264,15 +261,10 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
     setServices(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const togglePayment = (method: string) => {
-    setPaymentMethods(prev => prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]);
-  };
-
   const handleSave = async () => {
     const validServices = services.filter(s => s.name.trim());
     const enriched = validServices.map(s => ({
       ...s,
-      payment_methods: paymentMethods,
       plans,
     }));
 
