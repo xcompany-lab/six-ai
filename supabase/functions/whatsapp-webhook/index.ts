@@ -119,7 +119,7 @@ serve(async (req) => {
     const contactName = messageData.pushName || contactPhone;
     const instanceName = body.instance || "";
 
-    // === Handle outgoing messages (human takeover) ===
+    // === Handle outgoing messages (human takeover + commands) ===
     if (isFromMe) {
       const { type: msgType, text: directText } = detectMessageType(messageData);
       const messageText = directText;
@@ -164,17 +164,44 @@ serve(async (req) => {
         });
       }
 
-      // Load takeover minutes config
+      // Load AI config (takeover + commands)
       const { data: aiConfig } = await supabaseAdmin
         .from("ai_agent_config")
-        .select("human_takeover_minutes")
+        .select("human_takeover_minutes, stop_command, activate_command")
         .eq("user_id", userId)
         .maybeSingle();
 
+      const stopCommand = aiConfig?.stop_command || "/parar";
+      const activateCommand = aiConfig?.activate_command || "/ativar";
+      const trimmedText = messageText.trim();
+
+      // === Check for stop/activate commands ===
+      if (trimmedText === stopCommand) {
+        await supabaseAdmin
+          .from("leads")
+          .update({ ai_stopped: true })
+          .eq("id", lead.id);
+        console.log(`AI STOPPED for lead ${lead.id} via command "${stopCommand}"`);
+        return new Response(JSON.stringify({ status: "ai_stopped", lead_id: lead.id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (trimmedText === activateCommand) {
+        await supabaseAdmin
+          .from("leads")
+          .update({ ai_stopped: false, human_takeover_until: null })
+          .eq("id", lead.id);
+        console.log(`AI ACTIVATED for lead ${lead.id} via command "${activateCommand}"`);
+        return new Response(JSON.stringify({ status: "ai_activated", lead_id: lead.id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // === Normal human takeover flow ===
       const takeoverMinutes = aiConfig?.human_takeover_minutes || 30;
       const takeoverUntil = new Date(Date.now() + takeoverMinutes * 60 * 1000).toISOString();
 
-      // Set human takeover on lead
       await supabaseAdmin
         .from("leads")
         .update({ human_takeover_until: takeoverUntil })

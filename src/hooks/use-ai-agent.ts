@@ -18,6 +18,8 @@ export interface AIAgentConfig {
   objections: string;
   active: boolean;
   human_takeover_minutes: number;
+  stop_command: string;
+  activate_command: string;
 }
 
 export function useAIAgentConfig() {
