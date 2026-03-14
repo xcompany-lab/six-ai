@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrency, displayCurrency } from '@/lib/format-currency';
 
 const agentLabels: Record<string, { label: string; icon: typeof Bot }> = {
   attendant: { label: 'Atendente', icon: MessageSquare },

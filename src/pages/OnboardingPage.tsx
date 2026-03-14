@@ -409,6 +409,9 @@ export default function OnboardingPage() {
         name: s.name,
         price: s.price,
         notes: s.notes,
+        payment_methods: s.payment_methods || selectedPayments,
+        installments: s.installments || '',
+        installment_value: s.installment_value || '',
       }));
 
       await supabase
