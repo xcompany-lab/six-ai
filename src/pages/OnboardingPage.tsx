@@ -49,11 +49,13 @@ const LOADING_STAGES = [
   'Gerando seus 4 agentes de IA...',
 ];
 
-const STORAGE_KEY = 'six-onboarding-state';
+function getStorageKey(userId?: string) {
+  return userId ? `six-onboarding-${userId}` : 'six-onboarding-guest';
+}
 
-function loadSavedState() {
+function loadSavedState(userId?: string) {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey(userId));
     if (raw) return JSON.parse(raw);
   } catch {}
   return null;
