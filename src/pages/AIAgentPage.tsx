@@ -5,7 +5,8 @@ import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, Messa
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBusinessProfile, useSaveBusinessProfile, type ServicePriceItem } from '@/hooks/use-business-profile';
-import { useAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
+import { useAIAgentConfig, useSaveAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAgentConfigs, useRefineAgentPrompt } from '@/hooks/use-agent-configs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
