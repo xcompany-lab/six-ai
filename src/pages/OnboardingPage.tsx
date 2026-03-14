@@ -21,12 +21,22 @@ interface ServicePrice {
   price: string;
   notes: string;
   duration_minutes?: number;
+  duration_type?: 'simple' | 'multi_session' | 'block';
+  session_duration_minutes?: number;
+  session_count?: number;
   payment_methods?: string[];
   installments?: string;
   installment_value?: string;
 }
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480];
+
+const formatDuration = (minutes: number) => {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h${m}` : `${h}h`;
+};
 
 const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
 
