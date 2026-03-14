@@ -138,9 +138,9 @@ export default function AIAgentPage() {
                       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden">
                       <div className="rounded-lg border border-border bg-secondary/30">
-                        <ScrollArea className="max-h-[400px] p-4">
+                        <div className="max-h-[500px] overflow-y-auto p-4">
                           <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">{ac.system_prompt || 'Prompt vazio'}</pre>
-                        </ScrollArea>
+                        </div>
                         <div className="border-t border-border p-3">
                           <form onSubmit={(e) => {
                             e.preventDefault();
