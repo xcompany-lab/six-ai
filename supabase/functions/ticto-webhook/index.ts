@@ -14,6 +14,14 @@ const OFFER_PLAN_MAP: Record<string, { plan: string; contactsLimit: number }> = 
   "O19D97FF2": { plan: "pro", contactsLimit: 5000 },
 };
 
+// Recharge offer codes (Pix top-ups that reset ai_usage_percent)
+const RECHARGE_MAP: Record<string, number> = {
+  "O7FB21253": 10,
+  "O82700531": 15,
+  "OF75DAE2F": 25,
+  "O31D85879": 35,
+};
+
 // Ticto v2.0 status values
 const ACTIVATION_STATUSES = ["authorized"];
 const CANCELLATION_STATUSES = [
