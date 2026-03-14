@@ -91,14 +91,22 @@ export default function WhatsAppPage() {
             exit={{ opacity: 0, y: -20 }}
             className="glass rounded-xl p-8 max-w-lg mx-auto"
           >
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
-                <Wifi size={32} className="text-accent" />
+            <div className="text-center space-y-5">
+              {/* Hero success banner */}
+              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-accent/20 via-accent/10 to-transparent border border-accent/30 p-6">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-accent/80 to-accent animate-pulse" />
+                <div className="w-20 h-20 rounded-full bg-accent/20 border-2 border-accent/40 flex items-center justify-center mx-auto mb-3">
+                  <Wifi size={36} className="text-accent" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground">🎉 SIX AI Ativa!</h3>
+                <p className="text-base text-accent font-medium mt-1">
+                  Seu número já está com a inteligência artificial pronta para atender
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  A partir de agora, todas as mensagens recebidas serão respondidas automaticamente pelo seu agente IA.
+                </p>
               </div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">WhatsApp Conectado</h3>
-                <p className="text-sm text-muted-foreground mt-1">Seu agente IA está ativo e recebendo mensagens</p>
-              </div>
+
               <div className="bg-secondary/50 rounded-lg p-4 space-y-2 text-left">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Instância</span>
