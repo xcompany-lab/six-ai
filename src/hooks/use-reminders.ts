@@ -78,3 +78,15 @@ export function useUpsertRemindersConfig() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reminders_config'] }),
   });
 }
+
+export function useDeleteReminder() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (reminderId: string) => {
+      const { error } = await supabase.from('scheduled_reminders').delete().eq('id', reminderId).eq('user_id', user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled_reminders'] }),
+  });
+}
