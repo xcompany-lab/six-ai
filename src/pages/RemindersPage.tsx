@@ -69,7 +69,8 @@ export default function RemindersPage() {
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Serviço</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Agendamento</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Envio em</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                   <th className="text-right px-6 py-4 text-sm font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
