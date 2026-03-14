@@ -141,6 +141,10 @@ serve(async (req) => {
     systemPrompt += `\n\n[CONTEXTO TEMPORAL]\nData e hora atual: ${hoje}\nCalcule datas relativas a partir desta data. NUNCA invente datas.`;
     systemPrompt += `\n\nIMPORTANTE: Na interface web, responda de forma concisa e natural.`;
 
+    // Estimate input tokens for cost tracking (streaming doesn't return usage)
+    const inputText = systemPrompt + messages.map((m: { content: string }) => m.content).join(" ");
+    const estimatedInputTokens = estimateTokensFromText(inputText);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
