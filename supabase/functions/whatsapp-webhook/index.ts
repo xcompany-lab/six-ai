@@ -211,9 +211,8 @@ serve(async (req) => {
       });
     }
 
-    const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
-    const contactName = messageData.pushName || contactPhone;
-    const instanceName = body.instance || "";
+
+    // === Incoming message processing (from lead) ===
 
     // === Detect message type and extract text ===
     const { type: msgType, text: directText } = detectMessageType(messageData);
