@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-hero.png';
+import brazilFlag from '@/assets/brazil-flag.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -106,6 +107,22 @@ export default function HomePage() {
             </motion.div>
           </motion.div>
         </div>
+      </section>
+
+      {/* SELO BRASIL */}
+      <section className="py-6 sm:py-10 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center justify-center gap-3 sm:gap-4"
+        >
+          <img src={brazilFlag} alt="Bandeira do Brasil" className="h-7 sm:h-9 rounded-sm shadow-md" />
+          <span className="text-gradient-brand font-bold text-base sm:text-xl tracking-tight">
+            O sistema de IA mais completo do Brasil
+          </span>
+        </motion.div>
       </section>
 
       {/* PROBLEM */}
