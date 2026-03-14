@@ -47,9 +47,13 @@ export default function AgendaPage() {
   const handleManualSync = () => {
     syncGoogle.mutate({}, {
       onSuccess: (data) => {
+        const parts = [];
+        if (data.synced > 0) parts.push(`${data.synced} importados do Google`);
+        if (data.updated > 0) parts.push(`${data.updated} atualizados`);
+        if (data.pushed > 0) parts.push(`${data.pushed} enviados ao Google`);
         toast({
           title: 'Sincronizado',
-          description: `${data.synced} novos, ${data.updated} atualizados de ${data.total_events} eventos.`,
+          description: parts.length > 0 ? parts.join(', ') + '.' : 'Tudo sincronizado, nenhuma alteração.',
         });
       },
       onError: () => {
