@@ -19,6 +19,9 @@ interface ServicePrice {
   name: string;
   price: string;
   notes: string;
+  payment_methods?: string[];
+  installments?: string;
+  installment_value?: string;
 }
 
 const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
