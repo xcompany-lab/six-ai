@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,8 +6,17 @@ import { useBillingUsage } from '@/hooks/use-billing';
 import { PLAN_FEATURES, PlanType, TICTO_RECHARGE_URL } from '@/types';
 import { Check, Zap, AlertTriangle, Users, Cpu, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+
+const RECHARGE_OPTIONS = [
+  { value: 'R$ 10', label: 'Recarga básica', url: 'https://checkout.ticto.app/O7FB21253' },
+  { value: 'R$ 15', label: 'Uso moderado', url: 'https://checkout.ticto.app/O82700531' },
+  { value: 'R$ 25', label: 'Uso avançado', url: 'https://checkout.ticto.app/OF75DAE2F' },
+  { value: 'R$ 35', label: 'Alto volume', url: 'https://checkout.ticto.app/O31D85879' },
+];
 
 export default function PlanPage() {
+  const [rechargeOpen, setRechargeOpen] = useState(false);
   const { profile } = useAuth();
   const billing = useBillingUsage();
   const plans: PlanType[] = ['start', 'plus', 'pro'];
