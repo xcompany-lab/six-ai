@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X, Send } from 'lucide-react';
+import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X, Send, HandMetal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBusinessProfile, useSaveBusinessProfile, type ServicePriceItem } from '@/hooks/use-business-profile';
