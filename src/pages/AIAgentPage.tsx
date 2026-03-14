@@ -357,9 +357,18 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
             {services.map((s, i) => (
               <div key={i} className="p-4 rounded-lg bg-secondary/50 border border-border space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <Input placeholder="Nome do serviço" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} />
                     <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', formatCurrency(e.target.value))} />
+                    <select
+                      value={s.duration_minutes || 60}
+                      onChange={e => updateService(i, 'duration_minutes' as any, Number(e.target.value) as any)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {[15, 30, 45, 60, 90, 120].map(d => (
+                        <option key={d} value={d}>{d} min</option>
+                      ))}
+                    </select>
                   </div>
                   <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
                     <Trash2 size={16} />

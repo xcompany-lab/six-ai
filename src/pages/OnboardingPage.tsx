@@ -412,6 +412,7 @@ export default function OnboardingPage() {
         name: s.name,
         price: s.price,
         notes: s.notes,
+        duration_minutes: s.duration_minutes || 60,
         payment_methods: s.payment_methods || selectedPayments,
         installments: s.installments || '',
         installment_value: s.installment_value || '',
