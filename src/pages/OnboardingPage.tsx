@@ -67,7 +67,7 @@ export default function OnboardingPage() {
   const saved = useRef(loadSavedState(user?.id));
   const [currentStep, setCurrentStep] = useState(saved.current?.currentStep ?? 0);
   const [inputText, setInputText] = useState(saved.current?.inputText ?? '');
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(saved.current?.attachments ?? []);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -98,6 +98,7 @@ export default function OnboardingPage() {
     const state = {
       currentStep,
       inputText,
+      attachments,
       completedSteps,
       pricingStep,
       extractedServices,
@@ -107,7 +108,7 @@ export default function OnboardingPage() {
       allAttachments: allAttachments.current,
     };
     localStorage.setItem(key, JSON.stringify(state));
-  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
+  }, [currentStep, inputText, attachments, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
 
   // Re-hydrate when user.id becomes available and state is still at step 0
   useEffect(() => {
@@ -117,6 +118,7 @@ export default function OnboardingPage() {
     if (currentStep === 0 && completedSteps.length === 0 && data.currentStep > 0) {
       setCurrentStep(data.currentStep);
       setInputText(data.inputText ?? '');
+      setAttachments(data.attachments ?? []);
       setCompletedSteps(data.completedSteps ?? []);
       setPricingStep(data.pricingStep ?? false);
       setExtractedServices(data.extractedServices ?? []);
