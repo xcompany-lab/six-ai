@@ -364,13 +364,61 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
                 <div className="flex items-start gap-3">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input placeholder="Nome do serviço" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} />
-                    <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', e.target.value)} />
+                    <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', formatCurrency(e.target.value))} />
                   </div>
                   <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
                     <Trash2 size={16} />
                   </Button>
                 </div>
-                <Input placeholder="Observações (opcional)" value={s.notes || ''} onChange={e => updateService(i, 'notes', e.target.value)} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input placeholder="Observações (opcional)" value={s.notes || ''} onChange={e => updateService(i, 'notes', e.target.value)} />
+                  <Input
+                    placeholder="Parcelas (ex: 3)"
+                    value={s.installments || ''}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      const updated = [...services];
+                      let installmentValue = '';
+                      if (val && Number(val) > 0 && s.price) {
+                        const priceDigits = s.price.replace(/\D/g, '');
+                        if (priceDigits) {
+                          const total = Number(priceDigits) / 100;
+                          installmentValue = formatCurrency(String(Math.round((total / Number(val)) * 100)));
+                        }
+                      }
+                      updated[i] = { ...updated[i], installments: val, installment_value: installmentValue };
+                      setServices(updated);
+                    }}
+                  />
+                  <Input
+                    placeholder="Valor parcela"
+                    value={s.installment_value || ''}
+                    onChange={e => updateService(i, 'installment_value', formatCurrency(e.target.value))}
+                  />
+                </div>
+                {/* Per-service payment methods */}
+                <div className="flex flex-wrap gap-1.5">
+                  {PAYMENT_OPTIONS.map(method => (
+                    <button key={method} onClick={() => {
+                      const updated = [...services];
+                      const current = updated[i].payment_methods || [];
+                      updated[i] = {
+                        ...updated[i],
+                        payment_methods: current.includes(method)
+                          ? current.filter(m => m !== method)
+                          : [...current, method],
+                      };
+                      setServices(updated);
+                    }}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                        (s.payment_methods || []).includes(method)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50'
+                      }`}>
+                      {method}
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -378,23 +426,6 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
           <Button variant="outline" size="sm" onClick={addService} className="gap-1">
             <Plus size={14} /> Adicionar serviço
           </Button>
-
-          {/* Payment methods */}
-          <div>
-            <p className="text-sm font-medium text-foreground mb-2">Formas de pagamento aceitas</p>
-            <div className="flex flex-wrap gap-2">
-              {PAYMENT_OPTIONS.map(method => (
-                <button key={method} onClick={() => togglePayment(method)}
-                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    paymentMethods.includes(method)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50'
-                  }`}>
-                  {method}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Plans */}
           <div>
