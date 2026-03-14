@@ -106,17 +106,35 @@ export default function RemindersPage() {
   );
 }
 
+function parseReminderValue(val: string): { num: number; unit: 'h' | 'm' } {
+  const match = val.match(/^(\d+)(h|m)?$/);
+  if (match) return { num: parseInt(match[1], 10), unit: (match[2] as 'h' | 'm') || 'h' };
+  return { num: 24, unit: 'h' };
+}
+
 function ReminderConfigModal({ config, onClose, onSave }: { config: any; onClose: () => void; onSave: any }) {
+  const parsed1 = parseReminderValue(config?.first_reminder || '24h');
+  const parsed2 = parseReminderValue(config?.second_reminder || '2h');
+
   const [form, setForm] = useState({
-    first_reminder: config?.first_reminder || '24h',
-    second_reminder: config?.second_reminder || '2h',
+    first_num: parsed1.num,
+    first_unit: parsed1.unit,
+    second_num: parsed2.num,
+    second_unit: parsed2.unit,
     message_template: config?.message_template || '',
     confirmation_expected: config?.confirmation_expected || 'Sim/Confirmo',
     active: config?.active ?? true,
   });
 
   const handleSave = () => {
-    onSave.mutate(form, {
+    const payload = {
+      first_reminder: `${form.first_num}${form.first_unit}`,
+      second_reminder: `${form.second_num}${form.second_unit}`,
+      message_template: form.message_template,
+      confirmation_expected: form.confirmation_expected,
+      active: form.active,
+    };
+    onSave.mutate(payload, {
       onSuccess: () => { toast.success('Configurações de lembretes salvas!'); onClose(); },
       onError: () => toast.error('Erro ao salvar'),
     });
@@ -133,15 +151,27 @@ function ReminderConfigModal({ config, onClose, onSave }: { config: any; onClose
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">1º Lembrete (antes)</label>
-              <input value={form.first_reminder} onChange={e => setForm(f => ({ ...f, first_reminder: e.target.value }))}
-                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="24h" />
+              <div className="flex gap-2">
+                <input type="number" min={1} value={form.first_num} onChange={e => setForm(f => ({ ...f, first_num: Math.max(1, parseInt(e.target.value) || 1) }))}
+                  className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <select value={form.first_unit} onChange={e => setForm(f => ({ ...f, first_unit: e.target.value as 'h' | 'm' }))}
+                  className="px-3 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="h">horas</option>
+                  <option value="m">min</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">2º Lembrete (antes)</label>
-              <input value={form.second_reminder} onChange={e => setForm(f => ({ ...f, second_reminder: e.target.value }))}
-                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="2h" />
+              <div className="flex gap-2">
+                <input type="number" min={1} value={form.second_num} onChange={e => setForm(f => ({ ...f, second_num: Math.max(1, parseInt(e.target.value) || 1) }))}
+                  className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <select value={form.second_unit} onChange={e => setForm(f => ({ ...f, second_unit: e.target.value as 'h' | 'm' }))}
+                  className="px-3 py-3 rounded-lg bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="h">horas</option>
+                  <option value="m">min</option>
+                </select>
+              </div>
             </div>
           </div>
           <div>
