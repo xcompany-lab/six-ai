@@ -26,6 +26,8 @@ export interface ServicePriceItem {
   notes?: string;
   payment_methods?: string[];
   plans?: string;
+  installments?: string;
+  installment_value?: string;
 }
 
 export function useBusinessProfile() {
