@@ -427,6 +427,12 @@ async function processQueueItem(
     rawReply = aiData.choices?.[0]?.message?.content || "";
     console.log(`Raw AI reply (attempt ${attempt + 1}): ${rawReply.slice(0, 200)}`);
 
+    // Track token usage costs
+    if (aiData.usage) {
+      const costBRL = calculateGeminiCostBRL(aiData.usage);
+      await updateAiUsage(supabaseAdmin, userId, costBRL);
+    }
+
     if (rawReply.trim()) break;
     if (attempt === 0) {
       console.log("Empty reply, retrying...");
