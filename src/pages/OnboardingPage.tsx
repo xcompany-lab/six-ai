@@ -98,6 +98,7 @@ export default function OnboardingPage() {
     const state = {
       currentStep,
       inputText,
+      attachments,
       completedSteps,
       pricingStep,
       extractedServices,
@@ -107,7 +108,7 @@ export default function OnboardingPage() {
       allAttachments: allAttachments.current,
     };
     localStorage.setItem(key, JSON.stringify(state));
-  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
+  }, [currentStep, inputText, attachments, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
 
   // Re-hydrate when user.id becomes available and state is still at step 0
   useEffect(() => {
