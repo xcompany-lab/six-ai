@@ -49,11 +49,13 @@ const LOADING_STAGES = [
   'Gerando seus 4 agentes de IA...',
 ];
 
-const STORAGE_KEY = 'six-onboarding-state';
+function getStorageKey(userId?: string) {
+  return userId ? `six-onboarding-${userId}` : 'six-onboarding-guest';
+}
 
-function loadSavedState() {
+function loadSavedState(userId?: string) {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey(userId));
     if (raw) return JSON.parse(raw);
   } catch {}
   return null;
@@ -62,7 +64,7 @@ function loadSavedState() {
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const saved = useRef(loadSavedState());
+  const saved = useRef(loadSavedState(user?.id));
   const [currentStep, setCurrentStep] = useState(saved.current?.currentStep ?? 0);
   const [inputText, setInputText] = useState(saved.current?.inputText ?? '');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -90,8 +92,9 @@ export default function OnboardingPage() {
   const userResponses = useRef<string[]>(saved.current?.userResponses ?? []);
   const allAttachments = useRef<Attachment[]>(saved.current?.allAttachments ?? []);
 
-  // Persist state to sessionStorage
+  // Persist state to localStorage (per user)
   useEffect(() => {
+    const key = getStorageKey(user?.id);
     const state = {
       currentStep,
       inputText,
@@ -103,8 +106,28 @@ export default function OnboardingPage() {
       userResponses: userResponses.current,
       allAttachments: allAttachments.current,
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText]);
+    localStorage.setItem(key, JSON.stringify(state));
+  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
+
+  // Re-hydrate when user.id becomes available and state is still at step 0
+  useEffect(() => {
+    if (!user?.id) return;
+    const data = loadSavedState(user.id);
+    if (!data) return;
+    if (currentStep === 0 && completedSteps.length === 0 && data.currentStep > 0) {
+      setCurrentStep(data.currentStep);
+      setInputText(data.inputText ?? '');
+      setCompletedSteps(data.completedSteps ?? []);
+      setPricingStep(data.pricingStep ?? false);
+      setExtractedServices(data.extractedServices ?? []);
+      setSelectedPayments(data.selectedPayments ?? []);
+      setPlansText(data.plansText ?? '');
+      userResponses.current = data.userResponses ?? [];
+      allAttachments.current = data.allAttachments ?? [];
+      // Clean up guest key
+      localStorage.removeItem(getStorageKey());
+    }
+  }, [user?.id]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -301,7 +324,8 @@ export default function OnboardingPage() {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
       await refreshProfile();
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(getStorageKey(user?.id));
+      localStorage.removeItem(getStorageKey()); // clean guest key too
       toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
       setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
     } catch (err) {
