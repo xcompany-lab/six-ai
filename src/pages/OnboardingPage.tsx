@@ -118,6 +118,7 @@ export default function OnboardingPage() {
     if (currentStep === 0 && completedSteps.length === 0 && data.currentStep > 0) {
       setCurrentStep(data.currentStep);
       setInputText(data.inputText ?? '');
+      setAttachments(data.attachments ?? []);
       setCompletedSteps(data.completedSteps ?? []);
       setPricingStep(data.pricingStep ?? false);
       setExtractedServices(data.extractedServices ?? []);
