@@ -94,8 +94,25 @@ export default function RemindersPage() {
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${st.className}`}>
                           <StIcon size={12} /> {st.label}
                         </span>
-                      </td>
-                    </tr>
+                       </td>
+                       <td className="px-6 py-4 text-right">
+                         {r.status === 'pending' && (
+                           <button
+                             onClick={() => {
+                               deleteReminder.mutate(r.id, {
+                                 onSuccess: () => toast.success('Lembrete excluído'),
+                                 onError: () => toast.error('Erro ao excluir'),
+                               });
+                             }}
+                             disabled={deleteReminder.isPending}
+                             className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                             title="Excluir lembrete"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                         )}
+                       </td>
+                     </tr>
                   );
                 })}
               </tbody>
