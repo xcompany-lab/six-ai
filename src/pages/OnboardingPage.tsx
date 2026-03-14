@@ -90,6 +90,22 @@ export default function OnboardingPage() {
   const userResponses = useRef<string[]>(saved.current?.userResponses ?? []);
   const allAttachments = useRef<Attachment[]>(saved.current?.allAttachments ?? []);
 
+  // Persist state to sessionStorage
+  useEffect(() => {
+    const state = {
+      currentStep,
+      inputText,
+      completedSteps,
+      pricingStep,
+      extractedServices,
+      selectedPayments,
+      plansText,
+      userResponses: userResponses.current,
+      allAttachments: allAttachments.current,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText]);
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
