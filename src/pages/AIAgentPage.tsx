@@ -40,8 +40,10 @@ export default function AIAgentPage() {
   const { data: agentConfigs = [] } = useAgentConfigs();
   const { data: memories = [] } = useContactMemories();
   const refinePrompt = useRefineAgentPrompt();
+  const saveConfig = useSaveAIAgentConfig();
 
   const isActive = agentConfig?.active ?? true;
+  const takeoverMinutes = agentConfig?.human_takeover_minutes ?? 30;
 
   if (loadingProfile || loadingConfig) {
     return (
