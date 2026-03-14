@@ -233,6 +233,36 @@ serve(async (req) => {
       }
     }
 
+    // === Detect cancellation responses ===
+    const cancellationRegex = /^(não|nao|cancelar|cancela|cancelado|não posso|nao posso|no)\b/i;
+    if (cancellationRegex.test(messageText.trim())) {
+      const { data: sentReminder } = await supabaseAdmin
+        .from("scheduled_reminders")
+        .select("id, appointment_id")
+        .eq("user_id", userId)
+        .eq("contact_phone", contactPhone)
+        .eq("status", "sent")
+        .order("send_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (sentReminder) {
+        await supabaseAdmin
+          .from("scheduled_reminders")
+          .update({ status: "cancelled" })
+          .eq("id", sentReminder.id);
+
+        if (sentReminder.appointment_id) {
+          await supabaseAdmin
+            .from("appointments")
+            .update({ status: "cancelled" })
+            .eq("id", sentReminder.appointment_id);
+        }
+
+        console.log(`Cancellation detected from ${contactPhone} — reminder ${sentReminder.id} cancelled`);
+      }
+    }
+
     // === Enqueue message instead of processing immediately ===
     // Check if there's already a pending queue for this lead
     const { data: existingQueue } = await supabaseAdmin
