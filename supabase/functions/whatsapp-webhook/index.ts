@@ -335,6 +335,15 @@ serve(async (req) => {
     if (msgType === "audio") {
       const messageKey = messageData.key as Record<string, unknown> | undefined;
       if (messageKey && instanceName) {
+        // Check AI usage limit before transcribing (Whisper costs money too)
+        const blocked = await isAiUsageBlocked(supabaseAdmin, userId);
+        if (blocked) {
+          console.log(`AI usage limit reached for user ${userId} — skipping audio transcription`);
+          return new Response(JSON.stringify({ status: "blocked", reason: "ai_usage_limit" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         const decoded = await getDecodedAudioFromEvolution(instanceName, messageKey);
         if (decoded) {
           const ext = mimetypeToExtension(decoded.mimetype);
@@ -344,6 +353,13 @@ serve(async (req) => {
           const audioBlob = new Blob([bytes], { type: decoded.mimetype });
           messageText = await transcribeAudioWhisper(audioBlob, `audio.${ext}`);
           isFromAudio = true;
+
+          // Track Whisper transcription cost
+          if (messageText) {
+            const whisperCostBRL = calculateWhisperCostBRL(audioBlob.size);
+            await updateAiUsage(supabaseAdmin, userId, whisperCostBRL);
+            console.log(`Whisper cost tracked: ${audioBlob.size} bytes → R$${whisperCostBRL.toFixed(4)}`);
+          }
         } else {
           console.error("Failed to decode audio from Evolution API");
         }
