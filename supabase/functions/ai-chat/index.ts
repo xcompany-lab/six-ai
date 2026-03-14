@@ -95,11 +95,17 @@ serve(async (req) => {
         .map((s: any) => {
           let line = `- ${s.name}`;
           if (s.price) line += ` | Preço: ${s.price}`;
-          if (s.duration_minutes) line += ` | Duração: ${s.duration_minutes} min`;
+          if (s.duration_type === 'multi_session') {
+            line += ` | ${s.session_count || 2} sessões de ${s.session_duration_minutes || 60} min cada (total: ${(s.session_count || 2) * (s.session_duration_minutes || 60)} min)`;
+          } else if (s.duration_type === 'block') {
+            line += ` | Tipo: Bloco de evento (definir data início e fim no agendamento)`;
+          } else if (s.duration_minutes) {
+            line += ` | Duração: ${s.duration_minutes} min`;
+          }
           return line;
         });
       if (serviceLines.length > 0) {
-        systemPrompt += `\n\n[SERVIÇOS E DURAÇÕES]\n${serviceLines.join('\n')}\nAo agendar, use a duração específica do serviço. Se não tiver, use a duração padrão da agenda.`;
+        systemPrompt += `\n\n[SERVIÇOS E DURAÇÕES]\n${serviceLines.join('\n')}\nAo agendar, use a duração específica do serviço. Se não tiver, use a duração padrão da agenda.\n\n[SERVIÇOS MULTI-SESSÃO]\nSe o serviço requer múltiplas sessões:\n1. Pergunte a data da primeira sessão\n2. Proponha as sessões seguintes em dias úteis consecutivos\n3. Confirme todas as datas antes de agendar\n4. Crie um agendamento separado para cada sessão`;
       }
     }
 

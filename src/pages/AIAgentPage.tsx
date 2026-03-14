@@ -371,19 +371,74 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
             {services.map((s, i) => (
               <div key={i} className="p-4 rounded-lg bg-secondary/50 border border-border space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input placeholder="Nome do serviço" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} />
                     <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', formatCurrency(e.target.value))} />
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+                {/* Duration type selector */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs text-muted-foreground">Duração:</span>
+                  {(['simple', 'multi_session', 'block'] as const).map(type => (
+                    <button key={type} onClick={() => {
+                      const updated = [...services];
+                      updated[i] = { ...updated[i], duration_type: type };
+                      setServices(updated);
+                    }}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        (s.duration_type || 'simple') === type
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50'
+                      }`}>
+                      {type === 'simple' ? 'Sessão única' : type === 'multi_session' ? 'Múltiplas sessões' : 'Bloco de evento'}
+                    </button>
+                  ))}
+                </div>
+                {/* Duration fields */}
+                <div className="flex flex-wrap gap-3 items-center">
+                  {(!s.duration_type || s.duration_type === 'simple') && (
                     <select
                       value={s.duration_minutes || 60}
                       onChange={e => updateService(i, 'duration_minutes' as any, Number(e.target.value) as any)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      {[15, 30, 45, 60, 90, 120].map(d => (
-                        <option key={d} value={d}>{d} min</option>
+                      {DURATION_OPTIONS.map(d => (
+                        <option key={d} value={d}>{formatDuration(d)}</option>
                       ))}
                     </select>
-                  </div>
+                  )}
+                  {s.duration_type === 'multi_session' && (
+                    <>
+                      <select
+                        value={s.session_duration_minutes || 60}
+                        onChange={e => updateService(i, 'session_duration_minutes' as any, Number(e.target.value) as any)}
+                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        {DURATION_OPTIONS.map(d => (
+                          <option key={d} value={d}>Sessão: {formatDuration(d)}</option>
+                        ))}
+                      </select>
+                      <Input
+                        type="number"
+                        min={2}
+                        max={30}
+                        placeholder="Nº sessões"
+                        value={s.session_count || 2}
+                        onChange={e => updateService(i, 'session_count' as any, Number(e.target.value) || 2)}
+                        className="w-28"
+                      />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Total: {formatDuration((s.session_duration_minutes || 60) * (s.session_count || 2))}
+                      </span>
+                    </>
+                  )}
+                  {s.duration_type === 'block' && (
+                    <span className="text-xs text-muted-foreground">Datas definidas no momento do agendamento</span>
+                  )}
+                </div>
                   <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
                     <Trash2 size={16} />
                   </Button>
