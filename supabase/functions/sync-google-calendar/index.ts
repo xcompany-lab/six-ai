@@ -35,7 +35,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -66,10 +65,8 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub as string;
 
-    // Parse optional date range from request body
     let timeMin: string;
     let timeMax: string;
-
     try {
       const body = await req.json();
       timeMin = body.time_min || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -107,13 +104,12 @@ serve(async (req) => {
       });
     }
 
-    // Update stored access token
     await supabaseAdmin
       .from("user_settings")
       .update({ google_access_token: accessToken })
       .eq("user_id", userId);
 
-    // Fetch events from Google Calendar
+    // ===== PHASE 1: PULL from Google Calendar =====
     const params = new URLSearchParams({
       timeMin,
       timeMax,
@@ -124,9 +120,7 @@ serve(async (req) => {
 
     const eventsRes = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     const eventsData = await eventsRes.json();
@@ -141,7 +135,6 @@ serve(async (req) => {
 
     const events = eventsData.items || [];
 
-    // Get existing appointments with google_event_id for this user
     const { data: existingAppts } = await supabaseAdmin
       .from("appointments")
       .select("id, google_event_id")
@@ -154,9 +147,7 @@ serve(async (req) => {
     let updated = 0;
 
     for (const event of events) {
-      // Skip all-day events (no dateTime)
       if (!event.start?.dateTime || !event.end?.dateTime) continue;
-      // Skip cancelled events
       if (event.status === "cancelled") continue;
 
       const startDt = new Date(event.start.dateTime);
@@ -166,14 +157,11 @@ serve(async (req) => {
       const durationMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
 
       if (existingEventIds.has(event.id)) {
-        // Update existing appointment
         await supabaseAdmin
           .from("appointments")
           .update({
             lead_name: event.summary || "Evento Google",
-            date,
-            time,
-            duration_minutes: durationMinutes,
+            date, time, duration_minutes: durationMinutes,
             notes: event.description || "",
             service: "Google Calendar",
           })
@@ -181,16 +169,13 @@ serve(async (req) => {
           .eq("user_id", userId);
         updated++;
       } else {
-        // Insert new appointment
         await supabaseAdmin
           .from("appointments")
           .insert({
             user_id: userId,
             google_event_id: event.id,
             lead_name: event.summary || "Evento Google",
-            date,
-            time,
-            duration_minutes: durationMinutes,
+            date, time, duration_minutes: durationMinutes,
             notes: event.description || "",
             service: "Google Calendar",
             status: "confirmed",
@@ -199,10 +184,66 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Google Calendar sync for user ${userId}: ${synced} new, ${updated} updated from ${events.length} events`);
+    // ===== PHASE 2: PUSH local appointments to Google Calendar =====
+    const { data: localAppts } = await supabaseAdmin
+      .from("appointments")
+      .select("*")
+      .eq("user_id", userId)
+      .is("google_event_id", null);
+
+    let pushed = 0;
+
+    for (const appt of localAppts || []) {
+      try {
+        // Build start/end datetimes from date + time + duration
+        const startIso = `${appt.date}T${appt.time}`;
+        const startMs = new Date(startIso).getTime();
+        const endMs = startMs + (appt.duration_minutes || 60) * 60000;
+        const endDt = new Date(endMs);
+        const endIso = `${appt.date}T${endDt.toTimeString().slice(0, 8)}`;
+
+        const tz = "America/Sao_Paulo";
+        const summary = [appt.lead_name, appt.service].filter(Boolean).join(" - ") || "Agendamento SIX AI";
+        const description = appt.notes || "Agendado via SIX AI";
+
+        const createRes = await fetch(
+          "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              summary,
+              description,
+              start: { dateTime: startIso, timeZone: tz },
+              end: { dateTime: endIso, timeZone: tz },
+              reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
+            }),
+          }
+        );
+
+        const createData = await createRes.json();
+
+        if (createRes.ok && createData.id) {
+          await supabaseAdmin
+            .from("appointments")
+            .update({ google_event_id: createData.id })
+            .eq("id", appt.id);
+          pushed++;
+        } else {
+          console.error(`Failed to push appointment ${appt.id}:`, createData);
+        }
+      } catch (err) {
+        console.error(`Error pushing appointment ${appt.id}:`, err);
+      }
+    }
+
+    console.log(`Google Calendar sync for user ${userId}: ${synced} pulled, ${updated} updated, ${pushed} pushed from ${events.length} events`);
 
     return new Response(
-      JSON.stringify({ status: "ok", synced, updated, total_events: events.length }),
+      JSON.stringify({ status: "ok", synced, updated, pushed, total_events: events.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {

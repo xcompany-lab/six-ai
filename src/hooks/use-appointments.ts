@@ -184,7 +184,7 @@ export function useSyncGoogleCalendar() {
       });
 
       if (error) throw error;
-      return data as { status: string; synced: number; updated: number; total_events: number };
+      return data as { status: string; synced: number; updated: number; pushed: number; total_events: number };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['appointments'] });
