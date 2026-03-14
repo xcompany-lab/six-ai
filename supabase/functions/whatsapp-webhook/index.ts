@@ -380,6 +380,7 @@ serve(async (req) => {
 
     console.log(`Message from ${contactName} (${contactPhone}) [${msgType}]: ${messageText.slice(0, 150)}`);
 
+    // Move supabaseAdmin creation earlier for audio blocking check
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
