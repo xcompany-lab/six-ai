@@ -28,7 +28,10 @@ export default function AgendaPage() {
   const [view, setView] = useState<ViewType>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const syncGoogle = useSyncGoogleCalendar();
 
   const { startDate, endDate } = useMemo(() => {
