@@ -148,7 +148,7 @@ export default function HomePage() {
                 key={i}
                 src={logo}
                 alt="Cliente"
-                className="h-10 sm:h-12 object-contain grayscale brightness-200 opacity-50"
+                className="h-10 sm:h-12 object-contain grayscale opacity-30 brightness-150"
               />
             ))}
           </div>
