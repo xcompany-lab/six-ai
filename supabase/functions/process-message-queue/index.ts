@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
+import { calculateGeminiCostBRL, updateAiUsage, isAiUsageBlocked } from "../_shared/ai-cost.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -234,8 +235,20 @@ serve(async (req) => {
       }
 
       try {
-        await processQueueItem(supabaseAdmin, queue, LOVABLE_API_KEY);
-        processed++;
+        // Check AI usage limit before processing
+        const blocked = await isAiUsageBlocked(supabaseAdmin, queue.user_id as string);
+        if (blocked) {
+          console.log(`AI usage limit reached for user ${queue.user_id} — sending limit message`);
+          await sendWhatsAppMessage(
+            queue.contact_phone as string,
+            "⚠️ O limite de uso da IA foi atingido para este período. Entre em contato com o administrador para fazer uma recarga ou aguarde o próximo ciclo. Obrigado pela compreensão! 😊",
+            queue.instance_name as string
+          );
+          processed++;
+        } else {
+          await processQueueItem(supabaseAdmin, queue, LOVABLE_API_KEY);
+          processed++;
+        }
       } catch (e) {
         console.error(`Error processing queue ${queue.id}:`, e);
         // Mark as done even on error to prevent infinite retries
@@ -426,6 +439,12 @@ async function processQueueItem(
     rawReply = aiData.choices?.[0]?.message?.content || "";
     console.log(`Raw AI reply (attempt ${attempt + 1}): ${rawReply.slice(0, 200)}`);
 
+    // Track token usage costs
+    if (aiData.usage) {
+      const costBRL = calculateGeminiCostBRL(aiData.usage);
+      await updateAiUsage(supabaseAdmin, userId, costBRL);
+    }
+
     if (rawReply.trim()) break;
     if (attempt === 0) {
       console.log("Empty reply, retrying...");
@@ -523,6 +542,11 @@ async function processQueueItem(
             const schedRawReply = schedData.choices?.[0]?.message?.content || "";
             console.log(`Scheduler follow-up reply: ${schedRawReply.slice(0, 200)}`);
 
+            // Track scheduler token usage
+            if (schedData.usage) {
+              const schedCostBRL = calculateGeminiCostBRL(schedData.usage);
+              await updateAiUsage(supabaseAdmin, userId, schedCostBRL);
+            }
             const { messages: schedReplyMsgs, intent: schedIntent, parsedJson: schedParsedJson } = parseAIResponse(schedRawReply);
             await sendSplitMessages(contactPhone, schedReplyMsgs, instanceName);
             console.log(`Sent ${schedReplyMsgs.length} scheduler messages to ${contactPhone}`);
@@ -653,6 +677,13 @@ async function processQueueItem(
         if (crmResponse.ok) {
           const crmData = await crmResponse.json();
           const crmReply = crmData.choices?.[0]?.message?.content || "";
+
+          // Track CRM agent token usage
+          if (crmData.usage) {
+            const crmCostBRL = calculateGeminiCostBRL(crmData.usage);
+            await updateAiUsage(supabaseAdmin, userId, crmCostBRL);
+          }
+
           const crmJson = crmReply.match(/\{[\s\S]*\}/);
           if (crmJson) {
             const decision = JSON.parse(crmJson[0]);

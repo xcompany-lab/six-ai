@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       if (rechargeValue) {
         const { data, error } = await supabase
           .from("profiles")
-          .update({ ai_usage_percent: 0 })
+          .update({ ai_usage_percent: 0, ai_cost_accumulated: 0 })
           .eq("email", email)
           .select("id, email")
           .single();

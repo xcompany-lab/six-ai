@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
+import { calculateGeminiCostBRL, estimateTokensFromText, updateAiUsage, isAiUsageBlocked } from "../_shared/ai-cost.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,14 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     const { messages, contactPhone, agentType } = await req.json();
+
+    // Check AI usage limit before processing
+    const blocked = await isAiUsageBlocked(supabase, userId);
+    if (blocked) {
+      return new Response(JSON.stringify({ error: "Limite de uso da IA atingido. Faça uma recarga para continuar." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // === Try new multi-agent system first ===
     let systemPrompt: string | null = null;
@@ -132,6 +141,10 @@ serve(async (req) => {
     systemPrompt += `\n\n[CONTEXTO TEMPORAL]\nData e hora atual: ${hoje}\nCalcule datas relativas a partir desta data. NUNCA invente datas.`;
     systemPrompt += `\n\nIMPORTANTE: Na interface web, responda de forma concisa e natural.`;
 
+    // Estimate input tokens for cost tracking (streaming doesn't return usage)
+    const inputText = systemPrompt + messages.map((m: { content: string }) => m.content).join(" ");
+    const estimatedInputTokens = estimateTokensFromText(inputText);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -168,6 +181,15 @@ serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Track estimated cost for streaming (estimate output as ~50% of input)
+    const estimatedOutputTokens = Math.ceil(estimatedInputTokens * 0.5);
+    const costBRL = calculateGeminiCostBRL({
+      prompt_tokens: estimatedInputTokens,
+      completion_tokens: estimatedOutputTokens,
+    });
+    // Fire and forget — don't block the stream
+    updateAiUsage(supabase, userId, costBRL).catch(e => console.error("AI usage update error:", e));
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },

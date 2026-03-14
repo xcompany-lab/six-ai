@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
+import { calculateWhisperCostBRL, updateAiUsage, isAiUsageBlocked } from "../_shared/ai-cost.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -326,49 +327,13 @@ serve(async (req) => {
 
     // === Incoming message processing (from lead) ===
 
-    // === Detect message type and extract text ===
-    const { type: msgType, text: directText } = detectMessageType(messageData);
-    let messageText = directText;
-    let isFromAudio = false;
-
-    if (msgType === "audio") {
-      const messageKey = messageData.key as Record<string, unknown> | undefined;
-      if (messageKey && instanceName) {
-        const decoded = await getDecodedAudioFromEvolution(instanceName, messageKey);
-        if (decoded) {
-          const ext = mimetypeToExtension(decoded.mimetype);
-          const binaryStr = atob(decoded.base64);
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-          const audioBlob = new Blob([bytes], { type: decoded.mimetype });
-          messageText = await transcribeAudioWhisper(audioBlob, `audio.${ext}`);
-          isFromAudio = true;
-        } else {
-          console.error("Failed to decode audio from Evolution API");
-        }
-      }
-    }
-
-    if (!messageText) {
-      if (msgType === "audio") {
-        console.error(`Audio transcription failed for ${contactPhone} — no text extracted`);
-        return new Response(JSON.stringify({ status: "audio_transcription_failed", reason: "could not transcribe audio" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ status: "ignored", reason: "no text" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log(`Message from ${contactName} (${contactPhone}) [${msgType}]: ${messageText.slice(0, 150)}`);
-
+    // Create supabase client early (needed for audio blocking check)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // === Resolve user by instance name ===
+    // === Resolve user by instance name (needed before audio processing) ===
     let userId: string | null = null;
 
     if (instanceName) {
@@ -395,6 +360,59 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // === Detect message type and extract text ===
+    const { type: msgType, text: directText } = detectMessageType(messageData);
+    let messageText = directText;
+    let isFromAudio = false;
+
+    if (msgType === "audio") {
+      const messageKey = messageData.key as Record<string, unknown> | undefined;
+      if (messageKey && instanceName) {
+        // Check AI usage limit before transcribing (Whisper costs money too)
+        const blocked = await isAiUsageBlocked(supabaseAdmin, userId);
+        if (blocked) {
+          console.log(`AI usage limit reached for user ${userId} — skipping audio transcription`);
+          return new Response(JSON.stringify({ status: "blocked", reason: "ai_usage_limit" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const decoded = await getDecodedAudioFromEvolution(instanceName, messageKey);
+        if (decoded) {
+          const ext = mimetypeToExtension(decoded.mimetype);
+          const binaryStr = atob(decoded.base64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const audioBlob = new Blob([bytes], { type: decoded.mimetype });
+          messageText = await transcribeAudioWhisper(audioBlob, `audio.${ext}`);
+          isFromAudio = true;
+
+          // Track Whisper transcription cost
+          if (messageText) {
+            const whisperCostBRL = calculateWhisperCostBRL(audioBlob.size);
+            await updateAiUsage(supabaseAdmin, userId, whisperCostBRL);
+            console.log(`Whisper cost tracked: ${audioBlob.size} bytes → R$${whisperCostBRL.toFixed(4)}`);
+          }
+        } else {
+          console.error("Failed to decode audio from Evolution API");
+        }
+      }
+    }
+
+    if (!messageText) {
+      if (msgType === "audio") {
+        console.error(`Audio transcription failed for ${contactPhone} — no text extracted`);
+        return new Response(JSON.stringify({ status: "audio_transcription_failed", reason: "could not transcribe audio" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ status: "ignored", reason: "no text" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Message from ${contactName} (${contactPhone}) [${msgType}]: ${messageText.slice(0, 150)}`);
 
     // === Load or create lead ===
     let { data: lead } = await supabaseAdmin
