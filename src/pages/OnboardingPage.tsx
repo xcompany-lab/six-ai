@@ -92,8 +92,9 @@ export default function OnboardingPage() {
   const userResponses = useRef<string[]>(saved.current?.userResponses ?? []);
   const allAttachments = useRef<Attachment[]>(saved.current?.allAttachments ?? []);
 
-  // Persist state to sessionStorage
+  // Persist state to localStorage (per user)
   useEffect(() => {
+    const key = getStorageKey(user?.id);
     const state = {
       currentStep,
       inputText,
@@ -105,8 +106,28 @@ export default function OnboardingPage() {
       userResponses: userResponses.current,
       allAttachments: allAttachments.current,
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText]);
+    localStorage.setItem(key, JSON.stringify(state));
+  }, [currentStep, inputText, completedSteps, pricingStep, extractedServices, selectedPayments, plansText, user?.id]);
+
+  // Re-hydrate when user.id becomes available and state is still at step 0
+  useEffect(() => {
+    if (!user?.id) return;
+    const data = loadSavedState(user.id);
+    if (!data) return;
+    if (currentStep === 0 && completedSteps.length === 0 && data.currentStep > 0) {
+      setCurrentStep(data.currentStep);
+      setInputText(data.inputText ?? '');
+      setCompletedSteps(data.completedSteps ?? []);
+      setPricingStep(data.pricingStep ?? false);
+      setExtractedServices(data.extractedServices ?? []);
+      setSelectedPayments(data.selectedPayments ?? []);
+      setPlansText(data.plansText ?? '');
+      userResponses.current = data.userResponses ?? [];
+      allAttachments.current = data.allAttachments ?? [];
+      // Clean up guest key
+      localStorage.removeItem(getStorageKey());
+    }
+  }, [user?.id]);
 
   // Auto-resize textarea
   useEffect(() => {
