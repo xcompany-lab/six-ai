@@ -206,13 +206,42 @@ serve(async (req) => {
         });
       }
 
-      // Find lead
-      const { data: lead } = await supabaseAdmin
+      // Find lead — for @lid format, also try via message_queue
+      let lead: { id: string } | null = null;
+      
+      const { data: directLead } = await supabaseAdmin
         .from("leads")
         .select("id")
         .eq("user_id", userId)
         .eq("phone", contactPhone)
         .maybeSingle();
+      lead = directLead;
+
+      // If @lid and no direct match, find via recent message_queue
+      if (!lead && isLidFormat) {
+        const lidNumber = cleanPhone(remoteJid);
+        console.log(`@lid detected (${lidNumber}), searching message_queue for recent lead...`);
+        const { data: recentQueue } = await supabaseAdmin
+          .from("message_queue")
+          .select("lead_id, contact_phone")
+          .eq("instance_name", instanceName)
+          .order("last_message_at", { ascending: false })
+          .limit(5);
+        
+        if (recentQueue?.length) {
+          // Use the most recent queue entry for this instance
+          const match = recentQueue[0];
+          if (match.lead_id) {
+            const { data: queueLead } = await supabaseAdmin
+              .from("leads")
+              .select("id")
+              .eq("id", match.lead_id)
+              .maybeSingle();
+            lead = queueLead;
+            console.log(`Resolved @lid to lead ${lead?.id} (phone: ${match.contact_phone})`);
+          }
+        }
+      }
 
       if (!lead) {
         return new Response(JSON.stringify({ status: "ignored", reason: "fromMe no lead" }), {
