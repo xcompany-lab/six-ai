@@ -32,6 +32,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isOnboarded: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<void>;
@@ -52,6 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const fetchAdminStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    setIsAdmin(!!data);
+  };
+
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -89,7 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setSession(newSession);
         if (newSession?.user) {
-          fetchProfile(newSession.user.id).finally(() => {
+          Promise.all([
+            fetchProfile(newSession.user.id),
+            fetchAdminStatus(newSession.user.id),
+          ]).finally(() => {
             if (mounted) setIsLoading(false);
           });
         } else {
@@ -183,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasPlanAccess = (requiredPlan: PlanType) => {
+    if (isAdmin) return true;
     if (!profile) return false;
     const userPlan = profile.plan as PlanType;
     if (userPlan === 'trial') return true;
@@ -199,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         isAuthenticated: !!session?.user,
         isOnboarded: profile?.is_onboarded || false,
+        isAdmin,
         isLoading,
         signIn,
         signUp,
@@ -224,6 +242,7 @@ const fallbackAuthContext: AuthContextType = {
   isAuthenticated: false,
   isOnboarded: false,
   isLoading: false,
+  isAdmin: false,
   signIn: async () => ({ error: 'AuthProvider não inicializado' }),
   signUp: async () => ({ error: 'AuthProvider não inicializado' }),
   signInWithGoogle: async () => {},
