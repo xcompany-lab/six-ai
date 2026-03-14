@@ -203,6 +203,22 @@ serve(async (req) => {
       });
     }
 
+    // === Helper: send WhatsApp message ===
+    async function sendAutoReply(phone: string, text: string, instance: string) {
+      const evoUrl = Deno.env.get("EVOLUTION_API_URL");
+      const evoKey = Deno.env.get("EVOLUTION_API_KEY");
+      if (!evoUrl || !evoKey) return;
+      try {
+        await fetch(`${evoUrl}/message/sendText/${instance}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: evoKey },
+          body: JSON.stringify({ number: phone, text }),
+        });
+      } catch (e) {
+        console.error("Auto-reply send error:", e);
+      }
+    }
+
     // === Detect confirmation responses ===
     const confirmationRegex = /^(sim|confirmo|confirmado|confirmar|ok|yes)\b/i;
     if (confirmationRegex.test(messageText.trim())) {
@@ -222,14 +238,39 @@ serve(async (req) => {
           .update({ status: "confirmed" })
           .eq("id", sentReminder.id);
 
+        let replyText = `✅ Obrigado pela confirmação, ${contactName}! Te esperamos no horário combinado. 😊`;
+
         if (sentReminder.appointment_id) {
           await supabaseAdmin
             .from("appointments")
             .update({ status: "confirmed" })
             .eq("id", sentReminder.appointment_id);
+
+          const { data: appt } = await supabaseAdmin
+            .from("appointments")
+            .select("date, time, service")
+            .eq("id", sentReminder.appointment_id)
+            .maybeSingle();
+
+          if (appt) {
+            const dateFormatted = new Date(appt.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+            const timeFormatted = String(appt.time).slice(0, 5);
+            const servicePart = appt.service ? ` para *${appt.service}*` : "";
+            replyText = `✅ Obrigado pela confirmação, ${contactName}! Te esperamos no dia *${dateFormatted}* às *${timeFormatted}*${servicePart}. 😊`;
+          }
         }
 
+        await sendAutoReply(contactPhone, replyText, instanceName);
+        await supabaseAdmin.from("conversation_messages").insert({
+          user_id: userId, lead_id: lead.id, role: "assistant", content: replyText,
+        });
+
         console.log(`Confirmation detected from ${contactPhone} — reminder ${sentReminder.id} confirmed`);
+
+        // Skip normal queue — already handled
+        return new Response(JSON.stringify({ status: "confirmed", lead_id: lead.id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
@@ -252,6 +293,8 @@ serve(async (req) => {
           .update({ status: "cancelled" })
           .eq("id", sentReminder.id);
 
+        let replyText = `Entendido, ${contactName}. Seu agendamento foi cancelado. Se quiser reagendar, é só me avisar! 😉`;
+
         if (sentReminder.appointment_id) {
           await supabaseAdmin
             .from("appointments")
@@ -259,7 +302,16 @@ serve(async (req) => {
             .eq("id", sentReminder.appointment_id);
         }
 
+        await sendAutoReply(contactPhone, replyText, instanceName);
+        await supabaseAdmin.from("conversation_messages").insert({
+          user_id: userId, lead_id: lead.id, role: "assistant", content: replyText,
+        });
+
         console.log(`Cancellation detected from ${contactPhone} — reminder ${sentReminder.id} cancelled`);
+
+        return new Response(JSON.stringify({ status: "cancelled", lead_id: lead.id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
