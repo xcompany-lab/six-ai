@@ -39,6 +39,14 @@ const menuItems: MenuItem[] = [
   { label: 'Suporte', icon: HelpCircle, path: '/app/suporte' },
 ];
 
+const trialSteps: Record<string, number> = {
+  '/app/atendente-ia': 1,
+  '/app/agendamentos': 2,
+  '/app/followup': 3,
+  '/app/agenda': 4,
+  '/app/whatsapp': 5,
+};
+
 export default function AppSidebar({ onClose, isMobile }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
