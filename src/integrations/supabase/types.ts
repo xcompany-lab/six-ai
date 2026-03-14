@@ -93,6 +93,7 @@ export type Database = {
           energy: string
           fallback_message: string
           faq: string
+          human_takeover_minutes: number
           id: string
           knowledge_base: string
           objections: string
@@ -111,6 +112,7 @@ export type Database = {
           energy?: string
           fallback_message?: string
           faq?: string
+          human_takeover_minutes?: number
           id?: string
           knowledge_base?: string
           objections?: string
@@ -129,6 +131,7 @@ export type Database = {
           energy?: string
           fallback_message?: string
           faq?: string
+          human_takeover_minutes?: number
           id?: string
           knowledge_base?: string
           objections?: string
@@ -481,6 +484,7 @@ export type Database = {
           ai_status: string
           created_at: string
           current_agent: string
+          human_takeover_until: string | null
           id: string
           interest: string
           last_contact: string
@@ -498,6 +502,7 @@ export type Database = {
           ai_status?: string
           created_at?: string
           current_agent?: string
+          human_takeover_until?: string | null
           id?: string
           interest?: string
           last_contact?: string
@@ -515,6 +520,7 @@ export type Database = {
           ai_status?: string
           created_at?: string
           current_agent?: string
+          human_takeover_until?: string | null
           id?: string
           interest?: string
           last_contact?: string
