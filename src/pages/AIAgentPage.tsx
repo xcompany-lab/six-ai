@@ -21,6 +21,14 @@ const agentLabels: Record<string, { label: string; icon: typeof Bot }> = {
 };
 
 const PAYMENT_OPTIONS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480];
+
+const formatDuration = (minutes: number) => {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h${m}` : `${h}h`;
+};
 
 export default function AIAgentPage() {
   const navigate = useNavigate();
