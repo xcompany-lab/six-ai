@@ -115,8 +115,13 @@ export default function AppSidebar({ onClose, isMobile }: AppSidebarProps) {
               <AnimatePresence>
                 {showLabels && (
                   <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }}
-                    className="whitespace-nowrap overflow-hidden">
-                    {item.label}{locked && ' 🔒'}
+                    className="whitespace-nowrap overflow-hidden flex items-center gap-2">
+                    <span>{item.label}{locked && ' 🔒'}</span>
+                    {profile?.plan === 'trial' && trialSteps[item.path] && (
+                      <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded border border-purple-500/50 bg-purple-500/20 text-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]">
+                        PASSO {trialSteps[item.path]}
+                      </span>
+                    )}
                   </motion.span>
                 )}
               </AnimatePresence>
