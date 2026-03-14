@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN ai_cost_accumulated numeric NOT NULL DEFAULT 0;

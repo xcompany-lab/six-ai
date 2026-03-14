@@ -598,6 +598,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          ai_cost_accumulated: number
           ai_usage_percent: number
           avatar: string | null
           brand_name: string
@@ -621,6 +622,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ai_cost_accumulated?: number
           ai_usage_percent?: number
           avatar?: string | null
           brand_name?: string
@@ -644,6 +646,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ai_cost_accumulated?: number
           ai_usage_percent?: number
           avatar?: string | null
           brand_name?: string
