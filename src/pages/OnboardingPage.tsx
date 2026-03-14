@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Paperclip, Image, Link2, Send, Loader2, X, FileText, Globe, Check, Mic, Square, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import sixLogoHero from '@/assets/six-logo-hero.png';
+import { formatCurrency } from '@/lib/format-currency';
 
 // Types
 interface Attachment {
