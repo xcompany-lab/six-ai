@@ -99,6 +99,12 @@ async function transcribeAudioWhisper(audioBlob: Blob, filename: string): Promis
   return "";
 }
 
+// === Clean phone from JID ===
+
+function cleanPhone(jid: string): string {
+  return jid.replace("@s.whatsapp.net", "").replace("@lid", "").replace(/@.*$/, "");
+}
+
 // === Detect message type ===
 
 function detectMessageType(messageData: Record<string, unknown>): { type: string; text: string } {
