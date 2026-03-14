@@ -81,6 +81,28 @@ serve(async (req) => {
       systemPrompt = `${basePrompt}\n\nTom de voz: ${voiceTone}\nEnergia: ${agentConfig?.energy || "Moderada"}${prohibited}${businessContext}${faq}${knowledge}${pitch}${objections}${outOfScope}`;
     }
 
+    // Load service prices with durations for scheduling context
+    const { data: businessProfile } = await supabase
+      .from("business_profiles")
+      .select("service_prices")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (businessProfile?.service_prices && Array.isArray(businessProfile.service_prices) && (businessProfile.service_prices as any[]).length > 0) {
+      const servicePrices = businessProfile.service_prices as any[];
+      const serviceLines = servicePrices
+        .filter((s: any) => s.name)
+        .map((s: any) => {
+          let line = `- ${s.name}`;
+          if (s.price) line += ` | Preço: ${s.price}`;
+          if (s.duration_minutes) line += ` | Duração: ${s.duration_minutes} min`;
+          return line;
+        });
+      if (serviceLines.length > 0) {
+        systemPrompt += `\n\n[SERVIÇOS E DURAÇÕES]\n${serviceLines.join('\n')}\nAo agendar, use a duração específica do serviço. Se não tiver, use a duração padrão da agenda.`;
+      }
+    }
+
     // Load contact memory if available
     if (contactPhone) {
       const { data: contactMemory } = await supabase

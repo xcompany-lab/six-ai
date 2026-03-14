@@ -249,7 +249,7 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
 
   const cancelEditing = () => setEditing(false);
 
-  const updateService = (idx: number, field: keyof ServicePriceItem, value: string) => {
+  const updateService = (idx: number, field: keyof ServicePriceItem, value: string | number) => {
     setServices(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   };
 
