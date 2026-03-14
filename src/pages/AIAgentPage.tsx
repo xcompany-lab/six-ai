@@ -70,6 +70,29 @@ export default function AIAgentPage() {
           <Mic size={14} className="text-accent" />
           <span className="text-muted-foreground">Áudio: transcrição ativa</span>
         </div>
+        <div className="flex items-center gap-2 text-sm">
+          <HandMetal size={14} className="text-accent" />
+          <span className="text-muted-foreground">Pausa ao intervir:</span>
+          <Select
+            value={String(takeoverMinutes)}
+            onValueChange={(val) => {
+              saveConfig.mutate({ human_takeover_minutes: Number(val) }, {
+                onSuccess: () => toast({ title: 'Tempo de pausa atualizado' }),
+              });
+            }}
+          >
+            <SelectTrigger className="w-[100px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="15">15 min</SelectItem>
+              <SelectItem value="30">30 min</SelectItem>
+              <SelectItem value="60">1 hora</SelectItem>
+              <SelectItem value="120">2 horas</SelectItem>
+              <SelectItem value="240">4 horas</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </motion.div>
 
       {!profile ? (
