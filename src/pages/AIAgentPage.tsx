@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
-import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X, Send } from 'lucide-react';
+import { Bot, Users, Settings2, Loader2, ArrowRight, Mic, Brain, Calendar, MessageSquare, UserCheck, ChevronDown, DollarSign, Plus, Trash2, Save, Edit3, X, Send, HandMetal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBusinessProfile, useSaveBusinessProfile, type ServicePriceItem } from '@/hooks/use-business-profile';
-import { useAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
+import { useAIAgentConfig, useSaveAIAgentConfig, useContactMemories } from '@/hooks/use-ai-agent';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAgentConfigs, useRefineAgentPrompt } from '@/hooks/use-agent-configs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,8 +40,10 @@ export default function AIAgentPage() {
   const { data: agentConfigs = [] } = useAgentConfigs();
   const { data: memories = [] } = useContactMemories();
   const refinePrompt = useRefineAgentPrompt();
+  const saveConfig = useSaveAIAgentConfig();
 
   const isActive = agentConfig?.active ?? true;
+  const takeoverMinutes = agentConfig?.human_takeover_minutes ?? 30;
 
   if (loadingProfile || loadingConfig) {
     return (
@@ -66,6 +69,29 @@ export default function AIAgentPage() {
         <div className="flex items-center gap-2 text-sm">
           <Mic size={14} className="text-accent" />
           <span className="text-muted-foreground">Áudio: transcrição ativa</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <HandMetal size={14} className="text-accent" />
+          <span className="text-muted-foreground">Pausa ao intervir:</span>
+          <Select
+            value={String(takeoverMinutes)}
+            onValueChange={(val) => {
+              saveConfig.mutate({ human_takeover_minutes: Number(val) }, {
+                onSuccess: () => toast({ title: 'Tempo de pausa atualizado' }),
+              });
+            }}
+          >
+            <SelectTrigger className="w-[100px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="15">15 min</SelectItem>
+              <SelectItem value="30">30 min</SelectItem>
+              <SelectItem value="60">1 hora</SelectItem>
+              <SelectItem value="120">2 horas</SelectItem>
+              <SelectItem value="240">4 horas</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </motion.div>
 
