@@ -439,10 +439,6 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
                     <span className="text-xs text-muted-foreground">Datas definidas no momento do agendamento</span>
                   )}
                 </div>
-                  <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input placeholder="Observações (opcional)" value={s.notes || ''} onChange={e => updateService(i, 'notes', e.target.value)} />
                   <Input
