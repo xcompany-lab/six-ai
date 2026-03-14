@@ -203,6 +203,36 @@ serve(async (req) => {
       });
     }
 
+    // === Detect confirmation responses ===
+    const confirmationRegex = /^(sim|confirmo|confirmado|confirmar|ok|yes)\b/i;
+    if (confirmationRegex.test(messageText.trim())) {
+      const { data: sentReminder } = await supabaseAdmin
+        .from("scheduled_reminders")
+        .select("id, appointment_id")
+        .eq("user_id", userId)
+        .eq("contact_phone", contactPhone)
+        .eq("status", "sent")
+        .order("send_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (sentReminder) {
+        await supabaseAdmin
+          .from("scheduled_reminders")
+          .update({ status: "confirmed" })
+          .eq("id", sentReminder.id);
+
+        if (sentReminder.appointment_id) {
+          await supabaseAdmin
+            .from("appointments")
+            .update({ status: "confirmed" })
+            .eq("id", sentReminder.appointment_id);
+        }
+
+        console.log(`Confirmation detected from ${contactPhone} — reminder ${sentReminder.id} confirmed`);
+      }
+    }
+
     // === Enqueue message instead of processing immediately ===
     // Check if there's already a pending queue for this lead
     const { data: existingQueue } = await supabaseAdmin
