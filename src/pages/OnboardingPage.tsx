@@ -143,7 +143,11 @@ export default function OnboardingPage() {
     if (!user) return null;
     setIsUploading(true);
     try {
-      const path = `${user.id}/${Date.now()}-${file.name}`;
+      const sanitize = (name: string) =>
+        name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9._-]/g, '-')
+            .replace(/-+/g, '-');
+      const path = `${user.id}/${Date.now()}-${sanitize(file.name)}`;
       const { error } = await supabase.storage.from('onboarding-files').upload(path, file);
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('onboarding-files').getPublicUrl(path);
