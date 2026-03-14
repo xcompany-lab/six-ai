@@ -156,14 +156,23 @@ serve(async (req) => {
       const time = startDt.toTimeString().slice(0, 5);
       const durationMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
 
+      // Split summary by " - " to separate lead_name and service
+      let leadName = event.summary || "Evento Google";
+      let serviceName = "";
+      const summaryParts = (event.summary || "").split(" - ");
+      if (summaryParts.length >= 2) {
+        leadName = summaryParts[0].trim();
+        serviceName = summaryParts.slice(1).join(" - ").trim();
+      }
+
       if (existingEventIds.has(event.id)) {
         await supabaseAdmin
           .from("appointments")
           .update({
-            lead_name: event.summary || "Evento Google",
+            lead_name: leadName,
             date, time, duration_minutes: durationMinutes,
             notes: event.description || "",
-            service: "Google Calendar",
+            service: serviceName || "Google Calendar",
           })
           .eq("google_event_id", event.id)
           .eq("user_id", userId);
@@ -174,10 +183,10 @@ serve(async (req) => {
           .insert({
             user_id: userId,
             google_event_id: event.id,
-            lead_name: event.summary || "Evento Google",
+            lead_name: leadName,
             date, time, duration_minutes: durationMinutes,
             notes: event.description || "",
-            service: "Google Calendar",
+            service: serviceName || "Google Calendar",
             status: "confirmed",
           });
         synced++;
