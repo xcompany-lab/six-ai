@@ -67,7 +67,7 @@ export default function OnboardingPage() {
   const saved = useRef(loadSavedState(user?.id));
   const [currentStep, setCurrentStep] = useState(saved.current?.currentStep ?? 0);
   const [inputText, setInputText] = useState(saved.current?.inputText ?? '');
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(saved.current?.attachments ?? []);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
