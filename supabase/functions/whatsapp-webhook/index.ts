@@ -99,11 +99,13 @@ serve(async (req) => {
     }
 
     const messageData = body.data;
-    if (!messageData || messageData.key?.fromMe) {
-      return new Response(JSON.stringify({ status: "ignored", reason: "own message" }), {
+    if (!messageData) {
+      return new Response(JSON.stringify({ status: "ignored", reason: "no data" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const isFromMe = !!messageData.key?.fromMe;
 
     // Ignore group messages
     const remoteJid = messageData.key?.remoteJid || "";

@@ -17,6 +17,7 @@ export interface AIAgentConfig {
   pitch: string;
   objections: string;
   active: boolean;
+  human_takeover_minutes: number;
 }
 
 export function useAIAgentConfig() {

@@ -289,6 +289,29 @@ async function processQueueItem(
     return;
   }
 
+  // === Check human takeover ===
+  if (lead.human_takeover_until) {
+    const takeoverUntil = new Date(lead.human_takeover_until);
+    if (takeoverUntil > new Date()) {
+      console.log(`Human takeover active for lead ${leadId} until ${takeoverUntil.toISOString()} — skipping AI response`);
+      // Still update contact memory but don't respond
+      const { data: mem } = await supabaseAdmin
+        .from("contact_memory")
+        .select("id, interaction_count")
+        .eq("user_id", userId)
+        .eq("contact_phone", contactPhone)
+        .maybeSingle();
+      if (mem) {
+        await supabaseAdmin.from("contact_memory").update({
+          interaction_count: (mem.interaction_count || 0) + 1,
+          last_topics: combinedText.slice(0, 200),
+          last_interaction_at: new Date().toISOString(),
+        }).eq("id", mem.id);
+      }
+      return;
+    }
+  }
+
   const currentAgent = lead.current_agent || "attendant";
 
   // === Load agent config ===
