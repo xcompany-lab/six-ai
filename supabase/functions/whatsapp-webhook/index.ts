@@ -247,9 +247,9 @@ serve(async (req) => {
     let isFromAudio = false;
 
     if (msgType === "audio") {
-      const audioBase64 = extractAudioBase64(messageData);
-      if (audioBase64) {
-        messageText = await transcribeAudio(audioBase64);
+      const audioUrl = extractAudioUrl(messageData);
+      if (audioUrl) {
+        messageText = await transcribeAudioWhisper(audioUrl);
         isFromAudio = true;
       }
     }
