@@ -324,7 +324,8 @@ export default function OnboardingPage() {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
       await refreshProfile();
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(getStorageKey(user?.id));
+      localStorage.removeItem(getStorageKey()); // clean guest key too
       toast.success('4 agentes criados com sucesso! Seu atendente está pronto.');
       setTimeout(() => navigate('/app/atendente-ia', { replace: true }), 2000);
     } catch (err) {
