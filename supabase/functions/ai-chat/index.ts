@@ -31,6 +31,14 @@ serve(async (req) => {
 
     const { messages, contactPhone, agentType } = await req.json();
 
+    // Check AI usage limit before processing
+    const blocked = await isAiUsageBlocked(supabase, userId);
+    if (blocked) {
+      return new Response(JSON.stringify({ error: "Limite de uso da IA atingido. Faça uma recarga para continuar." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // === Try new multi-agent system first ===
     let systemPrompt: string | null = null;
 
