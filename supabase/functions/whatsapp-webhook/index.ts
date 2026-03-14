@@ -327,6 +327,40 @@ serve(async (req) => {
 
     // === Incoming message processing (from lead) ===
 
+    // Create supabase client early (needed for audio blocking check)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // === Resolve user by instance name (needed before audio processing) ===
+    let userId: string | null = null;
+
+    if (instanceName) {
+      const { data: instance } = await supabaseAdmin
+        .from("whatsapp_instances")
+        .select("user_id")
+        .eq("instance_name", instanceName)
+        .maybeSingle();
+      if (instance) userId = instance.user_id;
+    }
+
+    if (!userId) {
+      const { data: agents } = await supabaseAdmin
+        .from("ai_agent_config")
+        .select("user_id")
+        .eq("active", true)
+        .limit(1);
+      if (agents?.length) userId = agents[0].user_id;
+    }
+
+    if (!userId) {
+      console.error("No user found for instance:", instanceName);
+      return new Response(JSON.stringify({ status: "no_user" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // === Detect message type and extract text ===
     const { type: msgType, text: directText } = detectMessageType(messageData);
     let messageText = directText;
@@ -379,40 +413,6 @@ serve(async (req) => {
     }
 
     console.log(`Message from ${contactName} (${contactPhone}) [${msgType}]: ${messageText.slice(0, 150)}`);
-
-    // Move supabaseAdmin creation earlier for audio blocking check
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // === Resolve user by instance name ===
-    let userId: string | null = null;
-
-    if (instanceName) {
-      const { data: instance } = await supabaseAdmin
-        .from("whatsapp_instances")
-        .select("user_id")
-        .eq("instance_name", instanceName)
-        .maybeSingle();
-      if (instance) userId = instance.user_id;
-    }
-
-    if (!userId) {
-      const { data: agents } = await supabaseAdmin
-        .from("ai_agent_config")
-        .select("user_id")
-        .eq("active", true)
-        .limit(1);
-      if (agents?.length) userId = agents[0].user_id;
-    }
-
-    if (!userId) {
-      console.error("No user found for instance:", instanceName);
-      return new Response(JSON.stringify({ status: "no_user" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // === Load or create lead ===
     let { data: lead } = await supabaseAdmin
