@@ -177,14 +177,42 @@ export default function PlanPage() {
           <h3 className="text-lg font-semibold text-foreground">Recarga Pré-Paga via Pix</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">Atingiu o limite de IA? Recarregue para continuar usando sem trocar de plano.</p>
-        <button onClick={() => {
-            const url = `${TICTO_RECHARGE_URL}?email=${encodeURIComponent(profile?.email || '')}`;
-            window.open(url, '_blank');
-          }}
+        <button onClick={() => setRechargeOpen(true)}
           className="px-6 py-2.5 rounded-lg border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/10 transition-colors">
           Recarregar Agora
         </button>
       </motion.div>
+
+      {/* Recharge Modal */}
+      <Dialog open={rechargeOpen} onOpenChange={setRechargeOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center items-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+              <Zap className="text-warning" size={24} />
+            </div>
+            <DialogTitle className="text-xl">Sem créditos de IA disponíveis</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Seu limite mensal foi atingido. Faça uma recarga rápida para continuar usando o atendimento inteligente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {RECHARGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.url}
+                onClick={() => {
+                  const url = `${opt.url}?email=${encodeURIComponent(profile?.email || '')}`;
+                  window.open(url, '_blank');
+                  setRechargeOpen(false);
+                }}
+                className="flex flex-col items-center gap-1 p-4 rounded-xl border border-border bg-secondary/50 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              >
+                <span className="text-lg font-bold text-foreground">{opt.value}</span>
+                <span className="text-xs text-muted-foreground">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
