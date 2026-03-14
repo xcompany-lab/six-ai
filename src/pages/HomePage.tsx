@@ -10,6 +10,11 @@ import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-hero.png';
 import brazilFlag from '@/assets/brazil-flag.png';
+import logoClaro from '@/assets/clients/claro.jpeg';
+import logoMaisSaude from '@/assets/clients/mais-saude.jpeg';
+import logoNutriIntegrar from '@/assets/clients/nutri-integrar.png';
+import logoNutrilife from '@/assets/clients/nutrilife.jpeg';
+import logoEspacoSaude from '@/assets/clients/espaco-saude.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -123,6 +128,31 @@ export default function HomePage() {
             O sistema de IA mais completo do Brasil
           </span>
         </motion.div>
+      </section>
+
+      {/* MARQUEE LOGOS */}
+      <section className="pb-10 sm:pb-16">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center text-xs sm:text-sm text-muted-foreground mb-4 tracking-widest uppercase font-mono"
+        >
+          Empresas que confiam na 6AI
+        </motion.p>
+        <div className="overflow-hidden">
+          <div className="flex items-center gap-12 sm:gap-16 animate-marquee" style={{ width: 'max-content' }}>
+            {[logoClaro, logoMaisSaude, logoNutriIntegrar, logoNutrilife, logoEspacoSaude,
+              logoClaro, logoMaisSaude, logoNutriIntegrar, logoNutrilife, logoEspacoSaude].map((logo, i) => (
+              <img
+                key={i}
+                src={logo}
+                alt="Cliente"
+                className="h-10 sm:h-12 object-contain grayscale brightness-200 opacity-50"
+              />
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* PROBLEM */}
