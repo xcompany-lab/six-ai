@@ -301,6 +301,12 @@ serve(async (req) => {
     }
 
     if (!messageText) {
+      if (msgType === "audio") {
+        console.error(`Audio transcription failed for ${contactPhone} — no text extracted`);
+        return new Response(JSON.stringify({ status: "audio_transcription_failed", reason: "could not transcribe audio" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ status: "ignored", reason: "no text" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
