@@ -10,11 +10,11 @@ import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-hero.png';
 import brazilFlag from '@/assets/brazil-flag.png';
-import logoClaro from '@/assets/clients/claro.jpeg';
-import logoMaisSaude from '@/assets/clients/mais-saude.jpeg';
-import logoNutriIntegrar from '@/assets/clients/nutri-integrar.png';
-import logoNutrilife from '@/assets/clients/nutrilife.jpeg';
-import logoEspacoSaude from '@/assets/clients/espaco-saude.png';
+import logoClaro from '@/assets/clients/claro.png';
+import logoMaisSaude from '@/assets/clients/mais-saude.png';
+import logoNutriIntegrar from '@/assets/clients/nutri-integrar-nobg.png';
+import logoNutrilife from '@/assets/clients/nutrilife.png';
+import logoEspacoSaude from '@/assets/clients/espaco-saude-nobg.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
