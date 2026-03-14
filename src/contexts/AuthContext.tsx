@@ -199,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasPlanAccess = (requiredPlan: PlanType) => {
+    if (isAdmin) return true;
     if (!profile) return false;
     const userPlan = profile.plan as PlanType;
     if (userPlan === 'trial') return true;
