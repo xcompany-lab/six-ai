@@ -412,8 +412,13 @@ async function processQueueItem(
   // === Parse and send ===
   const { messages: replyMessages, intent, parsedJson } = parseAIResponse(rawReply);
 
-  await sendSplitMessages(contactPhone, replyMessages, instanceName);
-  console.log(`Sent ${replyMessages.length} messages to ${contactPhone}`);
+  // Skip sending attendant messages if intent is "schedule" — scheduler will respond instead
+  if (intent !== "schedule") {
+    await sendSplitMessages(contactPhone, replyMessages, instanceName);
+    console.log(`Sent ${replyMessages.length} messages to ${contactPhone}`);
+  } else {
+    console.log(`Skipping attendant messages (intent=schedule), scheduler will respond`);
+  }
 
   // === Save assistant messages to conversation history ===
   const fullReply = replyMessages.join("\n");
