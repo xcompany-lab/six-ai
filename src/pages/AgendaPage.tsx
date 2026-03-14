@@ -134,7 +134,27 @@ export default function AgendaPage() {
   return (
     <div>
       <PageHeader title="Agenda Integrada" subtitle="Visualize e gerencie sua agenda">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Google Calendar status */}
+          {googleConnected ? (
+            <button
+              onClick={disconnectGoogle}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-all"
+              title="Clique para desconectar"
+            >
+              <Check size={14} />
+              Google Agenda
+            </button>
+          ) : (
+            <button
+              onClick={connectGoogle}
+              disabled={googleLoading}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
+            >
+              {googleLoading ? <Loader2 size={14} className="animate-spin" /> : <Link size={14} />}
+              Conectar Google
+            </button>
+          )}
           <button
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all"
@@ -142,14 +162,16 @@ export default function AgendaPage() {
             <Settings size={14} />
             Configurações
           </button>
-          <button
-            onClick={handleManualSync}
-            disabled={syncGoogle.isPending}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={syncGoogle.isPending ? 'animate-spin' : ''} />
-            Sincronizar
-          </button>
+          {googleConnected && (
+            <button
+              onClick={handleManualSync}
+              disabled={syncGoogle.isPending}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={syncGoogle.isPending ? 'animate-spin' : ''} />
+              Sincronizar
+            </button>
+          )}
           <div className="flex gap-1 p-1 rounded-lg bg-secondary">
             {(Object.keys(viewLabels) as ViewType[]).map(v => (
               <button key={v} onClick={() => setView(v)}
