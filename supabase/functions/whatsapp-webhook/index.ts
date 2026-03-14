@@ -283,10 +283,20 @@ serve(async (req) => {
     let isFromAudio = false;
 
     if (msgType === "audio") {
-      const audioUrl = extractAudioUrl(messageData);
-      if (audioUrl) {
-        messageText = await transcribeAudioWhisper(audioUrl);
-        isFromAudio = true;
+      const messageKey = messageData.key as Record<string, unknown> | undefined;
+      if (messageKey && instanceName) {
+        const decoded = await getDecodedAudioFromEvolution(instanceName, messageKey);
+        if (decoded) {
+          const ext = mimetypeToExtension(decoded.mimetype);
+          const binaryStr = atob(decoded.base64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const audioBlob = new Blob([bytes], { type: decoded.mimetype });
+          messageText = await transcribeAudioWhisper(audioBlob, `audio.${ext}`);
+          isFromAudio = true;
+        } else {
+          console.error("Failed to decode audio from Evolution API");
+        }
       }
     }
 
