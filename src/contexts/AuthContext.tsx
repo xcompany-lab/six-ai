@@ -102,7 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setSession(newSession);
         if (newSession?.user) {
-          fetchProfile(newSession.user.id).finally(() => {
+          Promise.all([
+            fetchProfile(newSession.user.id),
+            fetchAdminStatus(newSession.user.id),
+          ]).finally(() => {
             if (mounted) setIsLoading(false);
           });
         } else {
