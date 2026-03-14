@@ -17,6 +17,7 @@ const statusMap: Record<string, { label: string; className: string; icon: typeof
 export default function RemindersPage() {
   const { data: config, isLoading: configLoading } = useRemindersConfig();
   const upsertConfig = useUpsertRemindersConfig();
+  const deleteReminder = useDeleteReminder();
   const { data: reminders, isLoading: remindersLoading } = useScheduledReminders();
   const [showConfig, setShowConfig] = useState(false);
 
