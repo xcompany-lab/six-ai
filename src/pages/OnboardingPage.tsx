@@ -592,43 +592,104 @@ export default function OnboardingPage() {
               {/* Service cards */}
               <div className="space-y-3 mb-6">
                 {extractedServices.map((service, i) => (
-                  <div key={i} className="glass-strong rounded-xl p-4 border border-border/50 flex flex-col sm:flex-row gap-3">
-                    <input
-                      value={service.name}
-                      onChange={e => {
-                        const updated = [...extractedServices];
-                        updated[i] = { ...updated[i], name: e.target.value };
-                        setExtractedServices(updated);
-                      }}
-                      placeholder="Nome do serviço"
-                      className="flex-1 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                    <input
-                      value={service.price}
-                      onChange={e => {
-                        const updated = [...extractedServices];
-                        updated[i] = { ...updated[i], price: e.target.value };
-                        setExtractedServices(updated);
-                      }}
-                      placeholder="R$ 0,00"
-                      className="w-full sm:w-32 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                    <input
-                      value={service.notes}
-                      onChange={e => {
-                        const updated = [...extractedServices];
-                        updated[i] = { ...updated[i], notes: e.target.value };
-                        setExtractedServices(updated);
-                      }}
-                      placeholder="Obs. (opcional)"
-                      className="w-full sm:w-40 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                    <button
-                      onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  <div key={i} className="glass-strong rounded-xl p-4 border border-border/50 space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        value={service.name}
+                        onChange={e => {
+                          const updated = [...extractedServices];
+                          updated[i] = { ...updated[i], name: e.target.value };
+                          setExtractedServices(updated);
+                        }}
+                        placeholder="Nome do serviço"
+                        className="flex-1 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <input
+                        value={service.price}
+                        onChange={e => {
+                          const updated = [...extractedServices];
+                          updated[i] = { ...updated[i], price: formatCurrency(e.target.value) };
+                          setExtractedServices(updated);
+                        }}
+                        placeholder="R$ 0,00"
+                        className="w-full sm:w-36 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <button
+                        onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
+                        className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        value={service.notes || ''}
+                        onChange={e => {
+                          const updated = [...extractedServices];
+                          updated[i] = { ...updated[i], notes: e.target.value };
+                          setExtractedServices(updated);
+                        }}
+                        placeholder="Obs. (opcional)"
+                        className="flex-1 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <input
+                        value={service.installments || ''}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          const updated = [...extractedServices];
+                          const installments = val;
+                          // Auto-calculate installment value
+                          let installmentValue = '';
+                          if (val && Number(val) > 0 && service.price) {
+                            const priceDigits = service.price.replace(/\D/g, '');
+                            if (priceDigits) {
+                              const total = Number(priceDigits) / 100;
+                              installmentValue = formatCurrency(String(Math.round((total / Number(val)) * 100)));
+                            }
+                          }
+                          updated[i] = { ...updated[i], installments, installment_value: installmentValue };
+                          setExtractedServices(updated);
+                        }}
+                        placeholder="Parcelas (ex: 3)"
+                        className="w-full sm:w-32 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <input
+                        value={service.installment_value || ''}
+                        onChange={e => {
+                          const updated = [...extractedServices];
+                          updated[i] = { ...updated[i], installment_value: formatCurrency(e.target.value) };
+                          setExtractedServices(updated);
+                        }}
+                        placeholder="Valor parcela"
+                        className="w-full sm:w-36 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    {/* Per-service payment methods */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {PAYMENT_METHODS.map(method => (
+                        <button
+                          key={method}
+                          onClick={() => {
+                            const updated = [...extractedServices];
+                            const current = updated[i].payment_methods || [];
+                            updated[i] = {
+                              ...updated[i],
+                              payment_methods: current.includes(method)
+                                ? current.filter(m => m !== method)
+                                : [...current, method],
+                            };
+                            setExtractedServices(updated);
+                          }}
+                          className={`px-2 py-1 rounded-full text-xs border transition-colors ${
+                            (service.payment_methods || []).includes(method)
+                              ? 'bg-primary/15 border-primary/40 text-primary'
+                              : 'bg-transparent border-border/50 text-muted-foreground hover:border-primary/30'
+                          }`}
+                        >
+                          {method}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ))}
 
