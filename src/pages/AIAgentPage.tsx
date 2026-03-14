@@ -249,7 +249,7 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
 
   const cancelEditing = () => setEditing(false);
 
-  const updateService = (idx: number, field: keyof ServicePriceItem, value: string) => {
+  const updateService = (idx: number, field: keyof ServicePriceItem, value: string | number) => {
     setServices(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   };
 
@@ -320,6 +320,9 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
                       <p className="text-sm font-medium text-foreground">{s.name}</p>
                       {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
                     </div>
+                    {s.duration_minutes && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground whitespace-nowrap">{s.duration_minutes} min</span>
+                    )}
                     <span className="text-sm font-semibold text-primary whitespace-nowrap">{displayCurrency(s.price)}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2 items-center">
@@ -354,9 +357,18 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
             {services.map((s, i) => (
               <div key={i} className="p-4 rounded-lg bg-secondary/50 border border-border space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <Input placeholder="Nome do serviço" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} />
                     <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', formatCurrency(e.target.value))} />
+                    <select
+                      value={s.duration_minutes || 60}
+                      onChange={e => updateService(i, 'duration_minutes' as any, Number(e.target.value) as any)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {[15, 30, 45, 60, 90, 120].map(d => (
+                        <option key={d} value={d}>{d} min</option>
+                      ))}
+                    </select>
                   </div>
                   <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
                     <Trash2 size={16} />

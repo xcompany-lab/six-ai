@@ -20,10 +20,13 @@ interface ServicePrice {
   name: string;
   price: string;
   notes: string;
+  duration_minutes?: number;
   payment_methods?: string[];
   installments?: string;
   installment_value?: string;
 }
+
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
 
@@ -409,6 +412,7 @@ export default function OnboardingPage() {
         name: s.name,
         price: s.price,
         notes: s.notes,
+        duration_minutes: s.duration_minutes || 60,
         payment_methods: s.payment_methods || selectedPayments,
         installments: s.installments || '',
         installment_value: s.installment_value || '',
@@ -617,6 +621,19 @@ export default function OnboardingPage() {
                         placeholder="R$ 0,00"
                         className="w-full sm:w-36 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
+                      <select
+                        value={service.duration_minutes || 60}
+                        onChange={e => {
+                          const updated = [...extractedServices];
+                          updated[i] = { ...updated[i], duration_minutes: Number(e.target.value) };
+                          setExtractedServices(updated);
+                        }}
+                        className="w-full sm:w-28 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        {DURATION_OPTIONS.map(d => (
+                          <option key={d} value={d}>{d} min</option>
+                        ))}
+                      </select>
                       <button
                         onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
                         className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"

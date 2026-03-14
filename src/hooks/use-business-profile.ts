@@ -23,6 +23,7 @@ export interface BusinessProfile {
 export interface ServicePriceItem {
   name: string;
   price: string;
+  duration_minutes?: number;
   notes?: string;
   payment_methods?: string[];
   plans?: string;
