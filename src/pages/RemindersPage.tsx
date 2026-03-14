@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { PlanGate } from '@/components/ui/plan-gate';
-import { useRemindersConfig, useUpsertRemindersConfig, useScheduledReminders } from '@/hooks/use-reminders';
-import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save, CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import { useRemindersConfig, useUpsertRemindersConfig, useScheduledReminders, useDeleteReminder } from '@/hooks/use-reminders';
+import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save, CheckCircle2, AlertCircle, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 const statusMap: Record<string, { label: string; className: string; icon: typeof CheckCircle2 }> = {
   pending: { label: 'Agendado', className: 'bg-secondary text-muted-foreground', icon: Clock },
-  sent: { label: 'Enviado', className: 'bg-accent/10 text-accent', icon: CheckCircle2 },
+  sent: { label: 'Enviado', className: 'bg-amber-500/10 text-amber-500', icon: Send },
+  confirmed: { label: 'Confirmado', className: 'bg-green-500/10 text-green-500', icon: CheckCircle2 },
   failed: { label: 'Falhou', className: 'bg-destructive/10 text-destructive', icon: AlertCircle },
 };
 
