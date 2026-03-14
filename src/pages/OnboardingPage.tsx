@@ -634,25 +634,89 @@ export default function OnboardingPage() {
                         placeholder="R$ 0,00"
                         className="w-full sm:w-36 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
-                      <select
-                        value={service.duration_minutes || 60}
-                        onChange={e => {
-                          const updated = [...extractedServices];
-                          updated[i] = { ...updated[i], duration_minutes: Number(e.target.value) };
-                          setExtractedServices(updated);
-                        }}
-                        className="w-full sm:w-28 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                      >
-                        {DURATION_OPTIONS.map(d => (
-                          <option key={d} value={d}>{d} min</option>
-                        ))}
-                      </select>
                       <button
                         onClick={() => setExtractedServices(prev => prev.filter((_, idx) => idx !== i))}
                         className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 self-center"
                       >
                         <Trash2 size={16} />
                       </button>
+                    </div>
+                    {/* Duration type selector */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-xs text-muted-foreground">Duração:</span>
+                      {(['simple', 'multi_session', 'block'] as const).map(type => (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            const updated = [...extractedServices];
+                            updated[i] = { ...updated[i], duration_type: type };
+                            setExtractedServices(updated);
+                          }}
+                          className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                            (service.duration_type || 'simple') === type
+                              ? 'bg-primary/15 border-primary/40 text-primary'
+                              : 'bg-transparent border-border/50 text-muted-foreground hover:border-primary/30'
+                          }`}
+                        >
+                          {type === 'simple' ? 'Sessão única' : type === 'multi_session' ? 'Múltiplas sessões' : 'Bloco de evento'}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Duration fields based on type */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {(!service.duration_type || service.duration_type === 'simple') && (
+                        <select
+                          value={service.duration_minutes || 60}
+                          onChange={e => {
+                            const updated = [...extractedServices];
+                            updated[i] = { ...updated[i], duration_minutes: Number(e.target.value) };
+                            setExtractedServices(updated);
+                          }}
+                          className="w-full sm:w-36 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                          {DURATION_OPTIONS.map(d => (
+                            <option key={d} value={d}>{formatDuration(d)}</option>
+                          ))}
+                        </select>
+                      )}
+                      {service.duration_type === 'multi_session' && (
+                        <>
+                          <select
+                            value={service.session_duration_minutes || 60}
+                            onChange={e => {
+                              const updated = [...extractedServices];
+                              updated[i] = { ...updated[i], session_duration_minutes: Number(e.target.value) };
+                              setExtractedServices(updated);
+                            }}
+                            className="w-full sm:w-44 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                          >
+                            {DURATION_OPTIONS.map(d => (
+                              <option key={d} value={d}>Sessão: {formatDuration(d)}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="number"
+                            min={2}
+                            max={30}
+                            value={service.session_count || 2}
+                            onChange={e => {
+                              const updated = [...extractedServices];
+                              updated[i] = { ...updated[i], session_count: Number(e.target.value) || 2 };
+                              setExtractedServices(updated);
+                            }}
+                            placeholder="Nº sessões"
+                            className="w-full sm:w-32 bg-transparent border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                          />
+                          <span className="text-xs text-muted-foreground self-center whitespace-nowrap">
+                            Total: {formatDuration((service.session_duration_minutes || 60) * (service.session_count || 2))}
+                          </span>
+                        </>
+                      )}
+                      {service.duration_type === 'block' && (
+                        <span className="text-xs text-muted-foreground self-center">
+                          Datas de início/fim serão definidas no momento do agendamento
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
