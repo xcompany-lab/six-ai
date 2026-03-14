@@ -187,7 +187,7 @@ serve(async (req) => {
             date, time, duration_minutes: durationMinutes,
             notes: event.description || "",
             service: serviceName || "Google Calendar",
-            status: "confirmed",
+            status: "pending",
           });
         synced++;
       }

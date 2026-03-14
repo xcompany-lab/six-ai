@@ -2,20 +2,22 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { PlanGate } from '@/components/ui/plan-gate';
-import { useRemindersConfig, useUpsertRemindersConfig, useScheduledReminders } from '@/hooks/use-reminders';
-import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save, CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import { useRemindersConfig, useUpsertRemindersConfig, useScheduledReminders, useDeleteReminder } from '@/hooks/use-reminders';
+import { Bell, Clock, MessageSquare, Settings2, X, Loader2, Save, CheckCircle2, AlertCircle, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 const statusMap: Record<string, { label: string; className: string; icon: typeof CheckCircle2 }> = {
   pending: { label: 'Agendado', className: 'bg-secondary text-muted-foreground', icon: Clock },
-  sent: { label: 'Enviado', className: 'bg-accent/10 text-accent', icon: CheckCircle2 },
+  sent: { label: 'Enviado', className: 'bg-amber-500/10 text-amber-500', icon: Send },
+  confirmed: { label: 'Confirmado', className: 'bg-green-500/10 text-green-500', icon: CheckCircle2 },
   failed: { label: 'Falhou', className: 'bg-destructive/10 text-destructive', icon: AlertCircle },
 };
 
 export default function RemindersPage() {
   const { data: config, isLoading: configLoading } = useRemindersConfig();
   const upsertConfig = useUpsertRemindersConfig();
+  const deleteReminder = useDeleteReminder();
   const { data: reminders, isLoading: remindersLoading } = useScheduledReminders();
   const [showConfig, setShowConfig] = useState(false);
 
@@ -67,7 +69,8 @@ export default function RemindersPage() {
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Serviço</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Agendamento</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Envio em</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                   <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                   <th className="text-right px-6 py-4 text-sm font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,8 +94,25 @@ export default function RemindersPage() {
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${st.className}`}>
                           <StIcon size={12} /> {st.label}
                         </span>
-                      </td>
-                    </tr>
+                       </td>
+                       <td className="px-6 py-4 text-right">
+                         {r.status === 'pending' && (
+                           <button
+                             onClick={() => {
+                               deleteReminder.mutate(r.id, {
+                                 onSuccess: () => toast.success('Lembrete excluído'),
+                                 onError: () => toast.error('Erro ao excluir'),
+                               });
+                             }}
+                             disabled={deleteReminder.isPending}
+                             className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                             title="Excluir lembrete"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                         )}
+                       </td>
+                     </tr>
                   );
                 })}
               </tbody>
