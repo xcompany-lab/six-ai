@@ -64,7 +64,7 @@ function loadSavedState(userId?: string) {
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const saved = useRef(loadSavedState());
+  const saved = useRef(loadSavedState(user?.id));
   const [currentStep, setCurrentStep] = useState(saved.current?.currentStep ?? 0);
   const [inputText, setInputText] = useState(saved.current?.inputText ?? '');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
