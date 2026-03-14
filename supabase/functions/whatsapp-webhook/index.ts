@@ -6,61 +6,61 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// === Audio transcription ===
+// === Audio transcription via OpenAI Whisper ===
 
-async function transcribeAudio(audioBase64: string): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY || !audioBase64) return "";
+async function transcribeAudioWhisper(audioUrl: string): Promise<string> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY || !audioUrl) return "";
 
   try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Download audio file from URL
+    console.log(`Downloading audio from: ${audioUrl.slice(0, 100)}...`);
+    const audioResp = await fetch(audioUrl);
+    if (!audioResp.ok) {
+      console.error(`Failed to download audio: ${audioResp.status}`);
+      return "";
+    }
+    const audioBlob = await audioResp.blob();
+    console.log(`Audio downloaded: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+
+    // Send to Whisper API
+    const formData = new FormData();
+    formData.append("file", audioBlob, "audio.ogg");
+    formData.append("model", "whisper-1");
+    formData.append("language", "pt");
+
+    const resp = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Transcreva o áudio abaixo para texto em português brasileiro. Corrija erros de fala naturais mas preserve o significado. Retorne apenas o texto transcrito, sem comentários.",
-              },
-              {
-                type: "image_url",
-                image_url: { url: `data:audio/ogg;base64,${audioBase64}` },
-              },
-            ],
-          },
-        ],
-      }),
+      body: formData,
     });
 
     if (resp.ok) {
       const data = await resp.json();
-      const text = data.choices?.[0]?.message?.content || "";
-      console.log(`Audio transcribed (${text.length} chars): ${text.slice(0, 100)}`);
+      const text = data.text || "";
+      console.log(`Audio transcribed via Whisper (${text.length} chars): ${text.slice(0, 100)}`);
       return text;
     }
-    await resp.text();
+    const errText = await resp.text();
+    console.error(`Whisper API error ${resp.status}: ${errText}`);
   } catch (e) {
     console.error("Audio transcription error:", e);
   }
   return "";
 }
 
-// === Extract audio base64 ===
+// === Extract audio URL from payload ===
 
-function extractAudioBase64(messageData: Record<string, unknown>): string | null {
+function extractAudioUrl(messageData: Record<string, unknown>): string | null {
   const msg = messageData.message as Record<string, unknown> | undefined;
   if (!msg) return null;
   const audioMsg = msg.audioMessage as Record<string, unknown> | undefined;
-  if (audioMsg?.base64) return audioMsg.base64 as string;
-  if (msg.base64) return msg.base64 as string;
-  return null;
+  if (!audioMsg) return null;
+  // Evolution API sends mediaUrl or url
+  const url = (audioMsg.mediaUrl as string) || (audioMsg.url as string) || null;
+  return url;
 }
 
 // === Detect message type ===
@@ -247,9 +247,9 @@ serve(async (req) => {
     let isFromAudio = false;
 
     if (msgType === "audio") {
-      const audioBase64 = extractAudioBase64(messageData);
-      if (audioBase64) {
-        messageText = await transcribeAudio(audioBase64);
+      const audioUrl = extractAudioUrl(messageData);
+      if (audioUrl) {
+        messageText = await transcribeAudioWhisper(audioUrl);
         isFromAudio = true;
       }
     }
