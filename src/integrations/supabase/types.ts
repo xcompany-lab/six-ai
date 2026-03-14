@@ -88,6 +88,7 @@ export type Database = {
       }
       ai_agent_config: {
         Row: {
+          activate_command: string
           active: boolean
           created_at: string
           energy: string
@@ -102,11 +103,13 @@ export type Database = {
           pitch: string
           prohibited_words: string
           prompt: string
+          stop_command: string
           updated_at: string
           user_id: string
           voice_tone: string
         }
         Insert: {
+          activate_command?: string
           active?: boolean
           created_at?: string
           energy?: string
@@ -121,11 +124,13 @@ export type Database = {
           pitch?: string
           prohibited_words?: string
           prompt?: string
+          stop_command?: string
           updated_at?: string
           user_id: string
           voice_tone?: string
         }
         Update: {
+          activate_command?: string
           active?: boolean
           created_at?: string
           energy?: string
@@ -140,6 +145,7 @@ export type Database = {
           pitch?: string
           prohibited_words?: string
           prompt?: string
+          stop_command?: string
           updated_at?: string
           user_id?: string
           voice_tone?: string
@@ -482,6 +488,7 @@ export type Database = {
       leads: {
         Row: {
           ai_status: string
+          ai_stopped: boolean
           created_at: string
           current_agent: string
           human_takeover_until: string | null
@@ -500,6 +507,7 @@ export type Database = {
         }
         Insert: {
           ai_status?: string
+          ai_stopped?: boolean
           created_at?: string
           current_agent?: string
           human_takeover_until?: string | null
@@ -518,6 +526,7 @@ export type Database = {
         }
         Update: {
           ai_status?: string
+          ai_stopped?: boolean
           created_at?: string
           current_agent?: string
           human_takeover_until?: string | null

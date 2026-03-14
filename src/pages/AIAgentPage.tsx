@@ -93,6 +93,33 @@ export default function AIAgentPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center gap-2 text-sm flex-wrap">
+          <span className="text-muted-foreground">Comandos:</span>
+          <Input
+            value={agentConfig?.stop_command ?? '/parar'}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.startsWith('/')) {
+                saveConfig.mutate({ stop_command: val });
+              }
+            }}
+            onBlur={() => toast({ title: 'Comando salvo' })}
+            className="w-[90px] h-7 text-xs font-mono"
+            placeholder="/parar"
+          />
+          <Input
+            value={agentConfig?.activate_command ?? '/ativar'}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.startsWith('/')) {
+                saveConfig.mutate({ activate_command: val });
+              }
+            }}
+            onBlur={() => toast({ title: 'Comando salvo' })}
+            className="w-[90px] h-7 text-xs font-mono"
+            placeholder="/ativar"
+          />
+        </div>
       </motion.div>
 
       {!profile ? (
