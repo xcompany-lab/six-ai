@@ -322,25 +322,31 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
           <div className="space-y-4">
             <div className="grid gap-2">
               {rawPrices.map((s, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50 border border-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{s.name}</p>
-                    {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
+                <div key={i} className="p-3 rounded-lg bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{s.name}</p>
+                      {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
+                    </div>
+                    <span className="text-sm font-semibold text-primary whitespace-nowrap">{displayCurrency(s.price)}</span>
                   </div>
-                  <span className="text-sm font-semibold text-primary whitespace-nowrap">{s.price || '—'}</span>
+                  <div className="mt-2 flex flex-wrap gap-2 items-center">
+                    {s.payment_methods && s.payment_methods.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {s.payment_methods.map(m => (
+                          <span key={m} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{m}</span>
+                        ))}
+                      </div>
+                    )}
+                    {s.installments && Number(s.installments) > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {s.installments}x {s.installment_value ? `de ${s.installment_value}` : ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-            {rawPrices[0]?.payment_methods && rawPrices[0].payment_methods.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Formas de pagamento</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {rawPrices[0].payment_methods.map(m => (
-                    <span key={m} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">{m}</span>
-                  ))}
-                </div>
-              </div>
-            )}
             {rawPrices[0]?.plans && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Planos / Pacotes</p>
