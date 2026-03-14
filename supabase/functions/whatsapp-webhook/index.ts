@@ -119,6 +119,102 @@ serve(async (req) => {
     const contactName = messageData.pushName || contactPhone;
     const instanceName = body.instance || "";
 
+    // === Handle outgoing messages (human takeover) ===
+    if (isFromMe) {
+      const { type: msgType, text: directText } = detectMessageType(messageData);
+      const messageText = directText;
+      if (!messageText) {
+        return new Response(JSON.stringify({ status: "ignored", reason: "fromMe no text" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      // Resolve user by instance
+      let userId: string | null = null;
+      if (instanceName) {
+        const { data: instance } = await supabaseAdmin
+          .from("whatsapp_instances")
+          .select("user_id")
+          .eq("instance_name", instanceName)
+          .maybeSingle();
+        if (instance) userId = instance.user_id;
+      }
+      if (!userId) {
+        return new Response(JSON.stringify({ status: "ignored", reason: "fromMe no user" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Find lead
+      const { data: lead } = await supabaseAdmin
+        .from("leads")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("phone", contactPhone)
+        .maybeSingle();
+
+      if (!lead) {
+        return new Response(JSON.stringify({ status: "ignored", reason: "fromMe no lead" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Load takeover minutes config
+      const { data: aiConfig } = await supabaseAdmin
+        .from("ai_agent_config")
+        .select("human_takeover_minutes")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const takeoverMinutes = aiConfig?.human_takeover_minutes || 30;
+      const takeoverUntil = new Date(Date.now() + takeoverMinutes * 60 * 1000).toISOString();
+
+      // Set human takeover on lead
+      await supabaseAdmin
+        .from("leads")
+        .update({ human_takeover_until: takeoverUntil })
+        .eq("id", lead.id);
+
+      // Save message to conversation history
+      await supabaseAdmin.from("conversation_messages").insert({
+        user_id: userId,
+        lead_id: lead.id,
+        role: "assistant_human",
+        content: messageText,
+      });
+
+      // Update contact memory
+      const { data: memory } = await supabaseAdmin
+        .from("contact_memory")
+        .select("id, interaction_count")
+        .eq("user_id", userId)
+        .eq("contact_phone", contactPhone)
+        .maybeSingle();
+
+      if (memory) {
+        await supabaseAdmin.from("contact_memory").update({
+          interaction_count: (memory.interaction_count || 0) + 1,
+          last_topics: messageText.slice(0, 200),
+          last_interaction_at: new Date().toISOString(),
+        }).eq("id", memory.id);
+      }
+
+      console.log(`Human takeover detected for lead ${lead.id} — paused for ${takeoverMinutes}min`);
+
+      return new Response(JSON.stringify({ status: "human_takeover", lead_id: lead.id, until: takeoverUntil }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
+    const contactName = messageData.pushName || contactPhone;
+    const instanceName = body.instance || "";
+
     // === Detect message type and extract text ===
     const { type: msgType, text: directText } = detectMessageType(messageData);
     let messageText = directText;
