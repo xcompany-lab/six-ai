@@ -2,11 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAppointmentsByDateRange, Appointment, useSyncGoogleCalendar } from '@/hooks/use-appointments';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw, Settings } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw, Settings, Check, Link, Unlink } from 'lucide-react';
 import { SchedulingSettings } from '@/components/agenda/SchedulingSettings';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 type ViewType = 'day' | 'week' | 'month';
 const viewLabels: Record<ViewType, string> = { day: 'Dia', week: 'Semana', month: 'Mês' };
