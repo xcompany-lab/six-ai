@@ -530,6 +530,11 @@ async function processQueueItem(
             const schedRawReply = schedData.choices?.[0]?.message?.content || "";
             console.log(`Scheduler follow-up reply: ${schedRawReply.slice(0, 200)}`);
 
+            // Track scheduler token usage
+            if (schedData.usage) {
+              const schedCostBRL = calculateGeminiCostBRL(schedData.usage);
+              await updateAiUsage(supabaseAdmin, userId, schedCostBRL);
+            }
             const { messages: schedReplyMsgs, intent: schedIntent, parsedJson: schedParsedJson } = parseAIResponse(schedRawReply);
             await sendSplitMessages(contactPhone, schedReplyMsgs, instanceName);
             console.log(`Sent ${schedReplyMsgs.length} scheduler messages to ${contactPhone}`);
