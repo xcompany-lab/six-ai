@@ -2,11 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAppointmentsByDateRange, Appointment, useSyncGoogleCalendar } from '@/hooks/use-appointments';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw, Settings } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, RefreshCw, Settings, Check, Link, Unlink } from 'lucide-react';
 import { SchedulingSettings } from '@/components/agenda/SchedulingSettings';
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 type ViewType = 'day' | 'week' | 'month';
 const viewLabels: Record<ViewType, string> = { day: 'Dia', week: 'Semana', month: 'Mês' };
@@ -26,7 +28,10 @@ export default function AgendaPage() {
   const [view, setView] = useState<ViewType>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const syncGoogle = useSyncGoogleCalendar();
 
   const { startDate, endDate } = useMemo(() => {
@@ -37,12 +42,60 @@ export default function AgendaPage() {
 
   const { data: appointments, isLoading } = useAppointmentsByDateRange(startDate, endDate);
 
-  // Auto-sync on mount and every 5 minutes
+  // Check Google Calendar connection
   useEffect(() => {
+    async function checkGoogle() {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_settings')
+        .select('google_calendar_connected')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setGoogleConnected(data?.google_calendar_connected || false);
+    }
+    checkGoogle();
+  }, [user]);
+
+  // Auto-sync on mount and every 5 minutes (only if connected)
+  useEffect(() => {
+    if (!googleConnected) return;
     syncGoogle.mutate({});
     const interval = setInterval(() => syncGoogle.mutate({}), 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [googleConnected]);
+
+  const connectGoogle = async () => {
+    if (!user) return;
+    setGoogleLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.auth_url) {
+        toast({ title: 'Erro', description: 'Não foi possível iniciar a conexão com o Google.', variant: 'destructive' });
+        setGoogleLoading(false);
+        return;
+      }
+      window.location.href = data.auth_url;
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao conectar com o Google.', variant: 'destructive' });
+      setGoogleLoading(false);
+    }
+  };
+
+  const disconnectGoogle = async () => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('user_settings')
+        .update({ google_calendar_connected: false, google_access_token: null, google_refresh_token: null })
+        .eq('user_id', user.id);
+      setGoogleConnected(false);
+      toast({ title: 'Desconectado', description: 'Google Agenda desconectada.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao desconectar.', variant: 'destructive' });
+    }
+  };
 
   const handleManualSync = () => {
     syncGoogle.mutate({}, {
@@ -81,7 +134,27 @@ export default function AgendaPage() {
   return (
     <div>
       <PageHeader title="Agenda Integrada" subtitle="Visualize e gerencie sua agenda">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Google Calendar status */}
+          {googleConnected ? (
+            <button
+              onClick={disconnectGoogle}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-all"
+              title="Clique para desconectar"
+            >
+              <Check size={14} />
+              Google Agenda
+            </button>
+          ) : (
+            <button
+              onClick={connectGoogle}
+              disabled={googleLoading}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
+            >
+              {googleLoading ? <Loader2 size={14} className="animate-spin" /> : <Link size={14} />}
+              Conectar Google
+            </button>
+          )}
           <button
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all"
@@ -89,14 +162,16 @@ export default function AgendaPage() {
             <Settings size={14} />
             Configurações
           </button>
-          <button
-            onClick={handleManualSync}
-            disabled={syncGoogle.isPending}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={syncGoogle.isPending ? 'animate-spin' : ''} />
-            Sincronizar
-          </button>
+          {googleConnected && (
+            <button
+              onClick={handleManualSync}
+              disabled={syncGoogle.isPending}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={syncGoogle.isPending ? 'animate-spin' : ''} />
+              Sincronizar
+            </button>
+          )}
           <div className="flex gap-1 p-1 rounded-lg bg-secondary">
             {(Object.keys(viewLabels) as ViewType[]).map(v => (
               <button key={v} onClick={() => setView(v)}
