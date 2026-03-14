@@ -49,25 +49,36 @@ const LOADING_STAGES = [
   'Gerando seus 4 agentes de IA...',
 ];
 
+const STORAGE_KEY = 'six-onboarding-state';
+
+function loadSavedState() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [inputText, setInputText] = useState('');
+  const saved = useRef(loadSavedState());
+  const [currentStep, setCurrentStep] = useState(saved.current?.currentStep ?? 0);
+  const [inputText, setInputText] = useState(saved.current?.inputText ?? '');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [completedSteps, setCompletedSteps] = useState<number[]>(saved.current?.completedSteps ?? []);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
-  const [pricingStep, setPricingStep] = useState(false);
+  const [pricingStep, setPricingStep] = useState(saved.current?.pricingStep ?? false);
   const [isExtractingServices, setIsExtractingServices] = useState(false);
-  const [extractedServices, setExtractedServices] = useState<ServicePrice[]>([]);
-  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
-  const [plansText, setPlansText] = useState('');
+  const [extractedServices, setExtractedServices] = useState<ServicePrice[]>(saved.current?.extractedServices ?? []);
+  const [selectedPayments, setSelectedPayments] = useState<string[]>(saved.current?.selectedPayments ?? []);
+  const [plansText, setPlansText] = useState(saved.current?.plansText ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -76,8 +87,8 @@ export default function OnboardingPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const userResponses = useRef<string[]>([]);
-  const allAttachments = useRef<Attachment[]>([]);
+  const userResponses = useRef<string[]>(saved.current?.userResponses ?? []);
+  const allAttachments = useRef<Attachment[]>(saved.current?.allAttachments ?? []);
 
   // Auto-resize textarea
   useEffect(() => {
