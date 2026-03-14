@@ -42,12 +42,60 @@ export default function AgendaPage() {
 
   const { data: appointments, isLoading } = useAppointmentsByDateRange(startDate, endDate);
 
-  // Auto-sync on mount and every 5 minutes
+  // Check Google Calendar connection
   useEffect(() => {
+    async function checkGoogle() {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_settings')
+        .select('google_calendar_connected')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setGoogleConnected(data?.google_calendar_connected || false);
+    }
+    checkGoogle();
+  }, [user]);
+
+  // Auto-sync on mount and every 5 minutes (only if connected)
+  useEffect(() => {
+    if (!googleConnected) return;
     syncGoogle.mutate({});
     const interval = setInterval(() => syncGoogle.mutate({}), 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [googleConnected]);
+
+  const connectGoogle = async () => {
+    if (!user) return;
+    setGoogleLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.auth_url) {
+        toast({ title: 'Erro', description: 'Não foi possível iniciar a conexão com o Google.', variant: 'destructive' });
+        setGoogleLoading(false);
+        return;
+      }
+      window.location.href = data.auth_url;
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao conectar com o Google.', variant: 'destructive' });
+      setGoogleLoading(false);
+    }
+  };
+
+  const disconnectGoogle = async () => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('user_settings')
+        .update({ google_calendar_connected: false, google_access_token: null, google_refresh_token: null })
+        .eq('user_id', user.id);
+      setGoogleConnected(false);
+      toast({ title: 'Desconectado', description: 'Google Agenda desconectada.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao desconectar.', variant: 'destructive' });
+    }
+  };
 
   const handleManualSync = () => {
     syncGoogle.mutate({}, {
