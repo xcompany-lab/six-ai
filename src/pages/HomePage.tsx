@@ -138,7 +138,7 @@ export default function HomePage() {
           viewport={{ once: true }}
           className="text-center text-xs sm:text-sm text-muted-foreground mb-4 tracking-widest uppercase font-mono"
         >
-          Empresas que confiam na 6AI
+          Empresas que confiam na SIX AI
         </motion.p>
         <div className="overflow-hidden">
           <div className="flex items-center gap-12 sm:gap-16 animate-marquee" style={{ width: 'max-content' }}>
