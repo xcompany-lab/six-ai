@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CyberIcon } from '@/components/ui/cyber-icon';
 import { PLAN_FEATURES } from '@/types';
 import sixLogo from '@/assets/six-logo-hero.png';
+import brazilFlag from '@/assets/brazil-flag.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
