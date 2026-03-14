@@ -182,6 +182,15 @@ serve(async (req) => {
       });
     }
 
+    // Track estimated cost for streaming (estimate output as ~50% of input)
+    const estimatedOutputTokens = Math.ceil(estimatedInputTokens * 0.5);
+    const costBRL = calculateGeminiCostBRL({
+      prompt_tokens: estimatedInputTokens,
+      completion_tokens: estimatedOutputTokens,
+    });
+    // Fire and forget — don't block the stream
+    updateAiUsage(supabase, userId, costBRL).catch(e => console.error("AI usage update error:", e));
+
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
