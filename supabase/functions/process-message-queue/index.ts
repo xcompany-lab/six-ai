@@ -235,8 +235,20 @@ serve(async (req) => {
       }
 
       try {
-        await processQueueItem(supabaseAdmin, queue, LOVABLE_API_KEY);
-        processed++;
+        // Check AI usage limit before processing
+        const blocked = await isAiUsageBlocked(supabaseAdmin, queue.user_id as string);
+        if (blocked) {
+          console.log(`AI usage limit reached for user ${queue.user_id} — sending limit message`);
+          await sendWhatsAppMessage(
+            queue.contact_phone as string,
+            "⚠️ O limite de uso da IA foi atingido para este período. Entre em contato com o administrador para fazer uma recarga ou aguarde o próximo ciclo. Obrigado pela compreensão! 😊",
+            queue.instance_name as string
+          );
+          processed++;
+        } else {
+          await processQueueItem(supabaseAdmin, queue, LOVABLE_API_KEY);
+          processed++;
+        }
       } catch (e) {
         console.error(`Error processing queue ${queue.id}:`, e);
         // Mark as done even on error to prevent infinite retries
