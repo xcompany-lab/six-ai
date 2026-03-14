@@ -242,6 +242,7 @@ const fallbackAuthContext: AuthContextType = {
   isAuthenticated: false,
   isOnboarded: false,
   isLoading: false,
+  isAdmin: false,
   signIn: async () => ({ error: 'AuthProvider não inicializado' }),
   signUp: async () => ({ error: 'AuthProvider não inicializado' }),
   signInWithGoogle: async () => {},
