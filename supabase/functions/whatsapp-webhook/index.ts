@@ -6,61 +6,97 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// === Audio transcription via OpenAI Whisper ===
+// === Audio: get decoded media via Evolution API, then transcribe with Whisper ===
 
-async function transcribeAudioWhisper(audioUrl: string): Promise<string> {
-  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  if (!OPENAI_API_KEY || !audioUrl) return "";
+async function getDecodedAudioFromEvolution(
+  instanceName: string,
+  messageKey: Record<string, unknown>
+): Promise<{ base64: string; mimetype: string } | null> {
+  const evoUrl = Deno.env.get("EVOLUTION_API_URL");
+  const evoKey = Deno.env.get("EVOLUTION_API_KEY");
+  if (!evoUrl || !evoKey) {
+    console.error("Missing EVOLUTION_API_URL or EVOLUTION_API_KEY");
+    return null;
+  }
 
   try {
-    // Download audio file from URL
-    console.log(`Downloading audio from: ${audioUrl.slice(0, 100)}...`);
-    const audioResp = await fetch(audioUrl);
-    if (!audioResp.ok) {
-      console.error(`Failed to download audio: ${audioResp.status}`);
-      return "";
-    }
-    const audioBlob = await audioResp.blob();
-    console.log(`Audio downloaded: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+    console.log(`Fetching decoded media from Evolution for instance ${instanceName}`);
+    const resp = await fetch(`${evoUrl}/chat/getBase64FromMediaMessage/${instanceName}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: evoKey },
+      body: JSON.stringify({ message: { key: messageKey } }),
+    });
 
-    // Send to Whisper API
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error(`Evolution getBase64 error ${resp.status}: ${errText}`);
+      return null;
+    }
+
+    const data = await resp.json();
+    const base64 = data.base64 || data.mediaBase64 || null;
+    const mimetype = data.mimetype || data.mediaType || "audio/ogg";
+
+    if (!base64) {
+      console.error("Evolution returned no base64 data:", JSON.stringify(data).slice(0, 300));
+      return null;
+    }
+
+    console.log(`Got decoded audio: ${base64.length} chars base64, mimetype: ${mimetype}`);
+    return { base64, mimetype };
+  } catch (e) {
+    console.error("Evolution getBase64 fetch error:", e);
+    return null;
+  }
+}
+
+function mimetypeToExtension(mimetype: string): string {
+  const map: Record<string, string> = {
+    "audio/ogg": "ogg",
+    "audio/ogg; codecs=opus": "ogg",
+    "audio/oga": "oga",
+    "audio/mp4": "m4a",
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/flac": "flac",
+  };
+  return map[mimetype.toLowerCase()] || "ogg";
+}
+
+async function transcribeAudioWhisper(audioBlob: Blob, filename: string): Promise<string> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) {
+    console.error("Missing OPENAI_API_KEY");
+    return "";
+  }
+
+  try {
+    console.log(`Sending ${audioBlob.size} bytes to Whisper as "${filename}"`);
     const formData = new FormData();
-    formData.append("file", audioBlob, "audio.ogg");
+    formData.append("file", audioBlob, filename);
     formData.append("model", "whisper-1");
     formData.append("language", "pt");
 
     const resp = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
       body: formData,
     });
 
     if (resp.ok) {
       const data = await resp.json();
       const text = data.text || "";
-      console.log(`Audio transcribed via Whisper (${text.length} chars): ${text.slice(0, 100)}`);
+      console.log(`Whisper transcribed (${text.length} chars): ${text.slice(0, 100)}`);
       return text;
     }
     const errText = await resp.text();
     console.error(`Whisper API error ${resp.status}: ${errText}`);
   } catch (e) {
-    console.error("Audio transcription error:", e);
+    console.error("Whisper transcription error:", e);
   }
   return "";
-}
-
-// === Extract audio URL from payload ===
-
-function extractAudioUrl(messageData: Record<string, unknown>): string | null {
-  const msg = messageData.message as Record<string, unknown> | undefined;
-  if (!msg) return null;
-  const audioMsg = msg.audioMessage as Record<string, unknown> | undefined;
-  if (!audioMsg) return null;
-  // Evolution API sends mediaUrl or url
-  const url = (audioMsg.mediaUrl as string) || (audioMsg.url as string) || null;
-  return url;
 }
 
 // === Detect message type ===
@@ -247,14 +283,30 @@ serve(async (req) => {
     let isFromAudio = false;
 
     if (msgType === "audio") {
-      const audioUrl = extractAudioUrl(messageData);
-      if (audioUrl) {
-        messageText = await transcribeAudioWhisper(audioUrl);
-        isFromAudio = true;
+      const messageKey = messageData.key as Record<string, unknown> | undefined;
+      if (messageKey && instanceName) {
+        const decoded = await getDecodedAudioFromEvolution(instanceName, messageKey);
+        if (decoded) {
+          const ext = mimetypeToExtension(decoded.mimetype);
+          const binaryStr = atob(decoded.base64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const audioBlob = new Blob([bytes], { type: decoded.mimetype });
+          messageText = await transcribeAudioWhisper(audioBlob, `audio.${ext}`);
+          isFromAudio = true;
+        } else {
+          console.error("Failed to decode audio from Evolution API");
+        }
       }
     }
 
     if (!messageText) {
+      if (msgType === "audio") {
+        console.error(`Audio transcription failed for ${contactPhone} — no text extracted`);
+        return new Response(JSON.stringify({ status: "audio_transcription_failed", reason: "could not transcribe audio" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ status: "ignored", reason: "no text" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
