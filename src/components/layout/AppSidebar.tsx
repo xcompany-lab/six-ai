@@ -8,7 +8,7 @@ import {
   Zap, Bell, Calendar, MessageSquare, Columns3, Brain, Settings, HelpCircle,
   ChevronLeft, ChevronRight, LogOut, X,
 } from 'lucide-react';
-import sixLogo from '@/assets/six-logo-dark.png';
+import sixLogo from '@/assets/six-logo-nobg.png';
 
 interface MenuItem {
   label: string;
