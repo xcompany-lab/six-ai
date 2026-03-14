@@ -24,6 +24,9 @@ export interface ServicePriceItem {
   name: string;
   price: string;
   duration_minutes?: number;
+  duration_type?: 'simple' | 'multi_session' | 'block';
+  session_duration_minutes?: number;
+  session_count?: number;
   notes?: string;
   payment_methods?: string[];
   plans?: string;
