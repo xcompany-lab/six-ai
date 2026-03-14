@@ -130,6 +130,31 @@ export default function HomePage() {
         </motion.div>
       </section>
 
+      {/* MARQUEE LOGOS */}
+      <section className="pb-10 sm:pb-16">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center text-xs sm:text-sm text-muted-foreground mb-4 tracking-widest uppercase font-mono"
+        >
+          Empresas que confiam na 6AI
+        </motion.p>
+        <div className="overflow-hidden">
+          <div className="flex items-center gap-12 sm:gap-16 animate-marquee" style={{ width: 'max-content' }}>
+            {[logoClaro, logoMaisSaude, logoNutriIntegrar, logoNutrilife, logoEspacoSaude,
+              logoClaro, logoMaisSaude, logoNutriIntegrar, logoNutrilife, logoEspacoSaude].map((logo, i) => (
+              <img
+                key={i}
+                src={logo}
+                alt="Cliente"
+                className="h-10 sm:h-12 object-contain grayscale brightness-200 opacity-50"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* PROBLEM */}
       <section className="py-20 lg:py-28 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
