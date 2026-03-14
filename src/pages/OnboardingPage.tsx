@@ -20,10 +20,13 @@ interface ServicePrice {
   name: string;
   price: string;
   notes: string;
+  duration_minutes?: number;
   payment_methods?: string[];
   installments?: string;
   installment_value?: string;
 }
+
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
 
