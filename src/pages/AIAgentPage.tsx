@@ -328,9 +328,15 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
                       <p className="text-sm font-medium text-foreground">{s.name}</p>
                       {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
                     </div>
-                    {s.duration_minutes && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground whitespace-nowrap">{s.duration_minutes} min</span>
-                    )}
+                    {s.duration_type === 'multi_session' ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent whitespace-nowrap">
+                        {s.session_count || 2} sessões de {formatDuration(s.session_duration_minutes || 60)}
+                      </span>
+                    ) : s.duration_type === 'block' ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent whitespace-nowrap">Bloco</span>
+                    ) : s.duration_minutes ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground whitespace-nowrap">{formatDuration(s.duration_minutes)}</span>
+                    ) : null}
                     <span className="text-sm font-semibold text-primary whitespace-nowrap">{displayCurrency(s.price)}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2 items-center">
