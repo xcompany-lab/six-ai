@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrency, displayCurrency } from '@/lib/format-currency';
 
 const agentLabels: Record<string, { label: string; icon: typeof Bot }> = {
   attendant: { label: 'Atendente', icon: MessageSquare },
@@ -235,16 +236,13 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
   const saveProfile = useSaveBusinessProfile();
   const [editing, setEditing] = useState(false);
   const [services, setServices] = useState<ServicePriceItem[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [plans, setPlans] = useState('');
 
   const rawPrices = (profile.service_prices || []) as ServicePriceItem[];
 
   const startEditing = () => {
     setServices(rawPrices.length > 0 ? rawPrices.map(s => ({ ...s })) : [{ name: '', price: '', notes: '' }]);
-    // Extract global payment methods and plans from first item or defaults
     const first = rawPrices[0];
-    setPaymentMethods(first?.payment_methods || []);
     setPlans(first?.plans || '');
     setEditing(true);
   };
@@ -263,15 +261,10 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
     setServices(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const togglePayment = (method: string) => {
-    setPaymentMethods(prev => prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]);
-  };
-
   const handleSave = async () => {
     const validServices = services.filter(s => s.name.trim());
     const enriched = validServices.map(s => ({
       ...s,
-      payment_methods: paymentMethods,
       plans,
     }));
 
@@ -321,25 +314,31 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
           <div className="space-y-4">
             <div className="grid gap-2">
               {rawPrices.map((s, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50 border border-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{s.name}</p>
-                    {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
+                <div key={i} className="p-3 rounded-lg bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{s.name}</p>
+                      {s.notes && <p className="text-xs text-muted-foreground">{s.notes}</p>}
+                    </div>
+                    <span className="text-sm font-semibold text-primary whitespace-nowrap">{displayCurrency(s.price)}</span>
                   </div>
-                  <span className="text-sm font-semibold text-primary whitespace-nowrap">{s.price || '—'}</span>
+                  <div className="mt-2 flex flex-wrap gap-2 items-center">
+                    {s.payment_methods && s.payment_methods.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {s.payment_methods.map(m => (
+                          <span key={m} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{m}</span>
+                        ))}
+                      </div>
+                    )}
+                    {s.installments && Number(s.installments) > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {s.installments}x {s.installment_value ? `de ${s.installment_value}` : ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-            {rawPrices[0]?.payment_methods && rawPrices[0].payment_methods.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Formas de pagamento</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {rawPrices[0].payment_methods.map(m => (
-                    <span key={m} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">{m}</span>
-                  ))}
-                </div>
-              </div>
-            )}
             {rawPrices[0]?.plans && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Planos / Pacotes</p>
@@ -357,13 +356,61 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
                 <div className="flex items-start gap-3">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input placeholder="Nome do serviço" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} />
-                    <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', e.target.value)} />
+                    <Input placeholder="R$ 0,00" value={s.price} onChange={e => updateService(i, 'price', formatCurrency(e.target.value))} />
                   </div>
                   <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeService(i)}>
                     <Trash2 size={16} />
                   </Button>
                 </div>
-                <Input placeholder="Observações (opcional)" value={s.notes || ''} onChange={e => updateService(i, 'notes', e.target.value)} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input placeholder="Observações (opcional)" value={s.notes || ''} onChange={e => updateService(i, 'notes', e.target.value)} />
+                  <Input
+                    placeholder="Parcelas (ex: 3)"
+                    value={s.installments || ''}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      const updated = [...services];
+                      let installmentValue = '';
+                      if (val && Number(val) > 0 && s.price) {
+                        const priceDigits = s.price.replace(/\D/g, '');
+                        if (priceDigits) {
+                          const total = Number(priceDigits) / 100;
+                          installmentValue = formatCurrency(String(Math.round((total / Number(val)) * 100)));
+                        }
+                      }
+                      updated[i] = { ...updated[i], installments: val, installment_value: installmentValue };
+                      setServices(updated);
+                    }}
+                  />
+                  <Input
+                    placeholder="Valor parcela"
+                    value={s.installment_value || ''}
+                    onChange={e => updateService(i, 'installment_value', formatCurrency(e.target.value))}
+                  />
+                </div>
+                {/* Per-service payment methods */}
+                <div className="flex flex-wrap gap-1.5">
+                  {PAYMENT_OPTIONS.map(method => (
+                    <button key={method} onClick={() => {
+                      const updated = [...services];
+                      const current = updated[i].payment_methods || [];
+                      updated[i] = {
+                        ...updated[i],
+                        payment_methods: current.includes(method)
+                          ? current.filter(m => m !== method)
+                          : [...current, method],
+                      };
+                      setServices(updated);
+                    }}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                        (s.payment_methods || []).includes(method)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50'
+                      }`}>
+                      {method}
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -371,23 +418,6 @@ function ServicePricingSection({ profile }: ServicePricingSectionProps) {
           <Button variant="outline" size="sm" onClick={addService} className="gap-1">
             <Plus size={14} /> Adicionar serviço
           </Button>
-
-          {/* Payment methods */}
-          <div>
-            <p className="text-sm font-medium text-foreground mb-2">Formas de pagamento aceitas</p>
-            <div className="flex flex-wrap gap-2">
-              {PAYMENT_OPTIONS.map(method => (
-                <button key={method} onClick={() => togglePayment(method)}
-                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    paymentMethods.includes(method)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50'
-                  }`}>
-                  {method}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Plans */}
           <div>
