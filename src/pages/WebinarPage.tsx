@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CheckCircle2, MessageSquare, Bot, Calendar, Users,
   BarChart3, AlertTriangle, ArrowRight, Sparkles, Clock,
@@ -49,6 +49,42 @@ const resultSteps = [
   { icon: Database, label: 'Registra tudo no CRM' },
 ];
 
+function getNextThursday2030() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 4=Thu
+  let daysUntil = (4 - day + 7) % 7;
+  // If it's Thursday but past 20:30, go to next week
+  if (daysUntil === 0) {
+    const h = now.getHours(), m = now.getMinutes();
+    if (h > 20 || (h === 20 && m >= 30)) daysUntil = 7;
+  }
+  const target = new Date(now);
+  target.setDate(now.getDate() + daysUntil);
+  target.setHours(20, 30, 0, 0);
+  return target;
+}
+
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = Math.max(0, getNextThursday2030().getTime() - Date.now());
+      setTimeLeft({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return timeLeft;
+}
+
 function scrollToForm() {
   document.getElementById('formulario')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -61,6 +97,7 @@ function formatWhatsApp(value: string) {
 }
 
 export default function WebinarPage() {
+  const countdown = useCountdown();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -115,6 +152,24 @@ export default function WebinarPage() {
                 <span>{b}</span>
               </div>
             ))}
+          </motion.div>
+
+          <motion.div variants={fadeUp} custom={3.5} className="flex flex-col items-center gap-1 mb-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Próximo encontro em:</p>
+            <div className="flex gap-3">
+              {[
+                { value: countdown.days, label: 'Dias' },
+                { value: countdown.hours, label: 'Horas' },
+                { value: countdown.minutes, label: 'Min' },
+                { value: countdown.seconds, label: 'Seg' },
+              ].map((unit) => (
+                <div key={unit.label} className="glass rounded-xl px-3 py-2 min-w-[56px] text-center">
+                  <span className="text-xl sm:text-2xl font-bold text-gradient-brand tabular-nums">{String(unit.value).padStart(2, '0')}</span>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{unit.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Quinta-feira às 20:30h</p>
           </motion.div>
 
           <motion.div variants={fadeUp} custom={4} className="flex flex-col items-center gap-2">
