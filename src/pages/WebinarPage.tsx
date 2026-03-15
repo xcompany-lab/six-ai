@@ -359,8 +359,8 @@ export default function WebinarPage() {
                   required
                 />
               </div>
-              <button type="submit" className="cyber-btn cyber-btn-primary w-full">
-                <span className="cyber-btn-inner w-full">Quero garantir minha vaga</span>
+              <button type="submit" disabled={loading} className="cyber-btn cyber-btn-primary w-full">
+                <span className="cyber-btn-inner w-full">{loading ? 'Registrando...' : 'Quero garantir minha vaga'}</span>
               </button>
               <p className="text-center text-xs text-muted-foreground">Preencha seus dados acima para participar.</p>
             </motion.form>
