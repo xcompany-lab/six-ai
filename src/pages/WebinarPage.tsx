@@ -49,6 +49,42 @@ const resultSteps = [
   { icon: Database, label: 'Registra tudo no CRM' },
 ];
 
+function getNextThursday2030() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 4=Thu
+  let daysUntil = (4 - day + 7) % 7;
+  // If it's Thursday but past 20:30, go to next week
+  if (daysUntil === 0) {
+    const h = now.getHours(), m = now.getMinutes();
+    if (h > 20 || (h === 20 && m >= 30)) daysUntil = 7;
+  }
+  const target = new Date(now);
+  target.setDate(now.getDate() + daysUntil);
+  target.setHours(20, 30, 0, 0);
+  return target;
+}
+
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = Math.max(0, getNextThursday2030().getTime() - Date.now());
+      setTimeLeft({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return timeLeft;
+}
+
 function scrollToForm() {
   document.getElementById('formulario')?.scrollIntoView({ behavior: 'smooth' });
 }
