@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { CyberIcon } from '@/components/ui/cyber-icon';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import sixLogo from '@/assets/six-logo-hero.png';
 
 const fadeUp = {
