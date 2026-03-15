@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { CyberIcon } from '@/components/ui/cyber-icon';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import sixLogo from '@/assets/six-logo-hero.png';
 
 const fadeUp = {
@@ -103,9 +105,18 @@ export default function WebinarPage() {
   const [whatsapp, setWhatsapp] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !whatsapp) return;
+    setLoading(true);
+    const { error } = await supabase.from('webinar_registrations').insert({ name, email, whatsapp });
+    setLoading(false);
+    if (error) {
+      toast({ title: 'Erro ao registrar', description: 'Tente novamente em instantes.', variant: 'destructive' });
+      return;
+    }
     setSubmitted(true);
   };
 
@@ -348,8 +359,8 @@ export default function WebinarPage() {
                   required
                 />
               </div>
-              <button type="submit" className="cyber-btn cyber-btn-primary w-full">
-                <span className="cyber-btn-inner w-full">Quero garantir minha vaga</span>
+              <button type="submit" disabled={loading} className="cyber-btn cyber-btn-primary w-full">
+                <span className="cyber-btn-inner w-full">{loading ? 'Registrando...' : 'Quero garantir minha vaga'}</span>
               </button>
               <p className="text-center text-xs text-muted-foreground">Preencha seus dados acima para participar.</p>
             </motion.form>
