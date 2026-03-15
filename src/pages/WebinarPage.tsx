@@ -154,6 +154,24 @@ export default function WebinarPage() {
             ))}
           </motion.div>
 
+          <motion.div variants={fadeUp} custom={3.5} className="flex flex-col items-center gap-1 mb-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Próximo encontro em:</p>
+            <div className="flex gap-3">
+              {[
+                { value: countdown.days, label: 'Dias' },
+                { value: countdown.hours, label: 'Horas' },
+                { value: countdown.minutes, label: 'Min' },
+                { value: countdown.seconds, label: 'Seg' },
+              ].map((unit) => (
+                <div key={unit.label} className="glass rounded-xl px-3 py-2 min-w-[56px] text-center">
+                  <span className="text-xl sm:text-2xl font-bold text-gradient-brand tabular-nums">{String(unit.value).padStart(2, '0')}</span>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{unit.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Quinta-feira às 20:30h</p>
+          </motion.div>
+
           <motion.div variants={fadeUp} custom={4} className="flex flex-col items-center gap-2">
             <button onClick={scrollToForm} className="cyber-btn cyber-btn-primary">
               <span className="cyber-btn-inner">Quero participar do encontro gratuito</span>
