@@ -67,6 +67,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/termos" element={<TermsPage />} />
       <Route path="/privacidade" element={<PrivacyPage />} />
+      <Route path="/webinar" element={<WebinarPage />} />
       <Route path="/onboarding" element={
         !isAuthenticated ? <Navigate to="/" replace /> :
         <OnboardingPage />
