@@ -105,9 +105,18 @@ export default function WebinarPage() {
   const [whatsapp, setWhatsapp] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !whatsapp) return;
+    setLoading(true);
+    const { error } = await supabase.from('webinar_registrations').insert({ name, email, whatsapp });
+    setLoading(false);
+    if (error) {
+      toast({ title: 'Erro ao registrar', description: 'Tente novamente em instantes.', variant: 'destructive' });
+      return;
+    }
     setSubmitted(true);
   };
 
