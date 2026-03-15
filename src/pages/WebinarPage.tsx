@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CheckCircle2, MessageSquare, Bot, Calendar, Users,
   BarChart3, AlertTriangle, ArrowRight, Sparkles, Clock,
