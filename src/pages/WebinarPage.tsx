@@ -97,6 +97,7 @@ function formatWhatsApp(value: string) {
 }
 
 export default function WebinarPage() {
+  const countdown = useCountdown();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
