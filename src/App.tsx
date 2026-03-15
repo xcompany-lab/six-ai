@@ -24,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import WebinarPage from "./pages/WebinarPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
