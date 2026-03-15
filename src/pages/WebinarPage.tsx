@@ -164,7 +164,7 @@ export default function WebinarPage() {
           <div className="space-y-6">
             {learnings.map((item, i) => (
               <motion.div key={item.title} variants={fadeUp} custom={i + 2} className="flex gap-4 items-start">
-                <CyberIcon icon={item.icon} variant={item.color} size="md" shape="rounded" />
+                <CyberIcon icon={item.icon} variant={item.color} size="md" />
                 <div>
                   <h3 className="font-semibold text-sm sm:text-base text-foreground">{`${i + 1}. ${item.title}`}</h3>
                   <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">{item.desc}</p>
