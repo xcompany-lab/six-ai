@@ -29,11 +29,11 @@ const heroBullets = [
 ];
 
 const learnings = [
-  { icon: MessageSquare, color: 'cyber-cyan' as const, title: 'Transformar o WhatsApp em um sistema inteligente', desc: 'Sem precisar trocar de número ou aprender ferramentas complicadas.' },
-  { icon: Clock, color: 'cyber-green' as const, title: 'Automatizar follow-ups', desc: 'Recuperando pacientes que normalmente seriam esquecidos.' },
-  { icon: UserCheck, color: 'cyber-yellow' as const, title: 'Qualificar pacientes automaticamente', desc: 'Antes mesmo de você responder.' },
-  { icon: BarChart3, color: 'cyber-magenta' as const, title: 'Organizar contatos em um CRM visual', desc: 'Sem planilhas e sem bagunça nas conversas.' },
-  { icon: Sparkles, color: 'cyber-cyan' as const, title: 'Reduzir o tempo gasto com atendimento', desc: 'E focar apenas nos pacientes realmente interessados.' },
+  { icon: MessageSquare, color: 'cyan' as const, title: 'Transformar o WhatsApp em um sistema inteligente', desc: 'Sem precisar trocar de número ou aprender ferramentas complicadas.' },
+  { icon: Clock, color: 'green' as const, title: 'Automatizar follow-ups', desc: 'Recuperando pacientes que normalmente seriam esquecidos.' },
+  { icon: UserCheck, color: 'yellow' as const, title: 'Qualificar pacientes automaticamente', desc: 'Antes mesmo de você responder.' },
+  { icon: BarChart3, color: 'magenta' as const, title: 'Organizar contatos em um CRM visual', desc: 'Sem planilhas e sem bagunça nas conversas.' },
+  { icon: Sparkles, color: 'cyan' as const, title: 'Reduzir o tempo gasto com atendimento', desc: 'E focar apenas nos pacientes realmente interessados.' },
 ];
 
 const specialties = [
